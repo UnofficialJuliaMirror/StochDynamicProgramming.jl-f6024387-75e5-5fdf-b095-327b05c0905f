@@ -285,6 +285,7 @@ function exhaustive_search_hd(samples::Array,
                         dynamics::Function, constraints::Function, cost::Function,
                         Vitp, t::Int, x::Union{Array,Tuple},
                         build_Ux::Nullable{Function} = Nullable{Function}())
+
     sampling_size = length(probas)
     expected_V = 0.
     count_admissible_w = 0.
@@ -296,6 +297,42 @@ function exhaustive_search_hd(samples::Array,
         proba = probas[w]
 
         uopt, best_V_x_w, admissible_u_w_count = exhaustive_search_hd_get_u(
+                                                            x_bounds, x_steps,
+                                                            x_dim,
+                                                            product_controls,
+                                                            dynamics, constraints,
+                                                            cost, Vitp, t, x, w_sample,
+                                                            build_Ux)
+
+
+        expected_V += proba*best_V_x_w
+        count_admissible_w += (admissible_u_w_count>0)*proba
+    end
+    if (count_admissible_w>0.)
+        expected_V = expected_V / count_admissible_w
+    end
+
+    return expected_V
+end
+
+function exhaustive_random_hd(samples::Array,
+                        probas::Array, x_bounds::Array,
+                        x_steps::Array, x_dim::Int, product_controls::Array,
+                        dynamics::Function, constraints::Function, cost::Function,
+                        Vitp, t::Int, x::Union{Array,Tuple},
+                        build_Ux::Nullable{Function} = Nullable{Function}())
+
+    sampling_size = length(probas)
+    expected_V = 0.
+    count_admissible_w = 0.
+
+    #Compute expectation
+    for w in 1:sampling_size
+        admissible_u_w_count = 0
+        w_sample = samples[:, w]
+        proba = probas[w]
+
+        uopt, best_V_x_w, admissible_u_w_count = exhaustive_random_hd_get_u(
                                                             x_bounds, x_steps,
                                                             x_dim,
                                                             product_controls,
@@ -391,6 +428,54 @@ function exhaustive_search_hd_get_u(x_bounds::Array,
                 optimal_u = u
             end
 
+        end
+    end
+
+    return optimal_u, best_V_x_w, admissible_u_w_count
+end
+
+function exhaustive_random_hd_get_u(x_bounds::Array,
+                        x_steps::Array, x_dim::Int, product_controls::Array,
+                        dynamics::Function, constraints::Function, cost::Function,
+                        Vitp, t::Int, x::Union{Array,Tuple}, w::Union{Array,Tuple},
+                        build_Ux::Nullable{Function} = Nullable{Function}())
+
+    if isnull(build_Ux)
+        controls_search_space = product_controls
+    else
+        controls_search_space = get(build_Ux)(t,x,w)
+    end
+
+    best_V_x_w = Inf
+    next_V_x_w = Inf
+    optimal_u = tuple()
+    admissible_u_w_count = 0
+
+    for u in product_controls
+
+        random_next_state = dynamics(t, x, u, w)
+
+        if constraints(t, x, u, w)
+
+            admissible_u_w_count  += 1
+
+            next_V_x_w = cost(t, x, u, w) 
+
+            for ip in 1:length(random_next_state.proba)
+
+                next_state = random_next_state.support[:,ip]
+
+                ind_next_state = real_index_from_variable(next_state, x_bounds,
+                                                            x_steps)
+
+                next_V_x_w += random_next_state.proba[ip]*Vitp[ind_next_state...] + Inf*~is_next_state_feasible(next_state, x_dim, x_bounds)
+
+            end
+
+            if (next_V_x_w < best_V_x_w)
+                    best_V_x_w = next_V_x_w
+                    optimal_u = u
+            end
         end
     end
 

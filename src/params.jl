@@ -68,18 +68,21 @@ type ExhaustiveSdpParameters <: SdpParameters
     expectation_computation::String
     monteCarloSize::Int
     buildSearchSpace::Nullable{Function}
+    dynamicsType::Symbol
 
     function ExhaustiveSdpParameters(stateSteps, controlSteps; infoStructure = "DH",
                             expectation_computation="Exact" ,monteCarloSize=1000,
-                            search_space_builder = Nullable{Function}())
+                            search_space_builder = Nullable{Function}(), dynamicsType = :classic)
 
-        if (expectation_computation != "Exact") && (expectation_computation != "MonteCarlo")
-            warn("Expectation computation defaulted to Exact")
-            expectation_computation="Exact"
-        end
+        (expectation_computation != "Exact") && (expectation_computation != "MonteCarlo") && 
+        warn("Expectation computation defaulted to Exact") && (expectation_computation="Exact")
+
+        (dynamicsType == :classic) || (dynamicsType == :random) || warn("Dynamics type defaulted to classic")
+
 
         return new(stateSteps, controlSteps, infoStructure,
-                    expectation_computation, monteCarloSize, search_space_builder)
+                    expectation_computation, monteCarloSize, 
+                    search_space_builder, dynamicsType)
     end
 
 end

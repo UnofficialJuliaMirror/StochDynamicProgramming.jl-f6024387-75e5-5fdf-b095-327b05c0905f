@@ -11,7 +11,7 @@ __precompile__()
 
 module StochDynamicProgramming
 
-using MathProgBase, JuMP, Distributions, StochasticDualDynamicProgramming
+using MathProgBase, JuMP, Distributions, StructDualDynProg
 using DocStringExtensions
 using CutPruners
 

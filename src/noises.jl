@@ -110,6 +110,7 @@ function noiselaw_product(law, laws...)
     end
 end
 
+Base.rand(law::StochDynamicProgramming.NoiseLaw) = law.support[:,StatsBase.sample(StatsBase.pweights(law.proba))]
 
 """
 Generate one sample of the aleas of the problem at time t
@@ -127,6 +128,7 @@ Generate one sample of the aleas of the problem at time t
 function sampling(law::Vector{NoiseLaw}, t::Int64)
     return law[t].support[:, rand(Categorical(law[t].proba))]
 end
+
 
 
 """

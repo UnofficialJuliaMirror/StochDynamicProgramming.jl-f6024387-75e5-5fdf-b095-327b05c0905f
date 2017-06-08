@@ -236,7 +236,11 @@ function compute_value_functions_grid(model::SPModel,
 
     if param.infoStructure == "HD"
         if isa(param, ExhaustiveSdpParameters)
-            get_V_t_x = BellmanSolvers.exhaustive_search_hd
+            if param.dynamicsType == :classic
+                get_V_t_x = BellmanSolvers.exhaustive_search_hd
+            else
+                get_V_t_x = BellmanSolvers.exhaustive_random_hd
+            end
         else
             get_V_t_x = BellmanSolvers.solve_inner_lp_hd
         end
