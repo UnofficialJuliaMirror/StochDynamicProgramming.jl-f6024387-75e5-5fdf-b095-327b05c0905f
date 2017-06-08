@@ -234,7 +234,7 @@ function compute_value_functions_grid(model::SPModel,
     #Compute final value functions
     initialize_final_value!(fin_cost, product_states, x_bounds, x_steps, V)
 
-    if param.infoStructure == "HD"
+    if param.infoStructure == :hd
         if isa(param, ExhaustiveSdpParameters)
             if param.dynamicsType == :classic
                 get_V_t_x = BellmanSolvers.exhaustive_search_hd
@@ -245,8 +245,8 @@ function compute_value_functions_grid(model::SPModel,
             get_V_t_x = BellmanSolvers.solve_inner_lp_hd
         end
     else
-        param.infoStructure == "DH" || warn("Information structure defaulted to DH")
-        param.infoStructure = "DH"
+        param.infoStructure == :dh || warn("Information structure defaulted to DH")
+        param.infoStructure = :dh
         get_V_t_x = BellmanSolvers.exhaustive_search_dh
     end
 
@@ -350,8 +350,8 @@ function get_control(model::SPModel,param::SdpParameters,
         push!(optional_args, param.buildSearchSpace)
 
     else
-
-        get_u = BellmanSolvers.exhaustive_search_hd_get_u
+ 
+        get_u = param.dynamicsType == :classic ? BellmanSolvers.exhaustive_search_hd_get_u : BellmanSolvers.exhaustive_random_hd_get_u 
 
         push!(optional_args, w, param.buildSearchSpace)
 
@@ -430,9 +430,9 @@ function forward_simulations(model::SPModel,
 
     info = param.infoStructure
 
-    if  info == "DH"
+    if  info == :dh
         get_u = BellmanSolvers.exhaustive_search_dh_get_u
-    elseif info == "HD"
+    elseif info == :hd
         get_u = BellmanSolvers.exhaustive_search_hd_get_u
     else
         warn("Information structure should be DH or HD. Defaulted to DH")
@@ -454,7 +454,7 @@ function forward_simulations(model::SPModel,
             w = current_scen[t,:]
             args_t = [value_bspline_interpolation(V, t+1), t, x]
 
-            if info == "DH"
+            if info == :dh
                 if (param.expectation_computation=="MonteCarlo")
                     sampling_size = param.monteCarloSize
                     push!(args_w, [sampling(law,t) for i in 1:sampling_size],

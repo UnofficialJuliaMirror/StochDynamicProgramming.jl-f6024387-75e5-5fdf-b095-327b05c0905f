@@ -64,13 +64,13 @@ type ExhaustiveSdpParameters <: SdpParameters
 
     stateSteps::Array
     controlSteps::Array
-    infoStructure::String
+    infoStructure::Symbol
     expectation_computation::String
     monteCarloSize::Int
     buildSearchSpace::Nullable{Function}
     dynamicsType::Symbol
 
-    function ExhaustiveSdpParameters(stateSteps, controlSteps; infoStructure = "DH",
+    function ExhaustiveSdpParameters(stateSteps, controlSteps; infoStructure = :dh,
                             expectation_computation="Exact" ,monteCarloSize=1000,
                             search_space_builder = Nullable{Function}(), dynamicsType = :classic)
 
@@ -96,8 +96,8 @@ type MathProgSdpParameters <: SdpParameters
     expectation_computation::String
     monteCarloSize::Int
 
-    function MathProgSdpParameters(stateSteps::Array, solver; programType = "LP",
-                                infoStructure = "DH",
+    function MathProgSdpParameters(stateSteps::Array, solver; programType = :lp,
+                                infoStructure = :dh,
                                 expectation_computation="Exact",
                                 monteCarloSize=1000)
 

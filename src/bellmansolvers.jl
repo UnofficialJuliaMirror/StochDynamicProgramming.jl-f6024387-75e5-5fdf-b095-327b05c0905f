@@ -457,8 +457,6 @@ function exhaustive_random_hd_get_u(x_bounds::Array,
 
         if constraints(t, x, u, w)
 
-            admissible_u_w_count  += 1
-
             next_V_x_w = cost(t, x, u, w) 
 
             for ip in 1:length(random_next_state.proba)
@@ -467,10 +465,12 @@ function exhaustive_random_hd_get_u(x_bounds::Array,
 
                 ind_next_state = real_index_from_variable(next_state, x_bounds,
                                                             x_steps)
-
+                
                 next_V_x_w += random_next_state.proba[ip]*Vitp[ind_next_state...] + Inf*~is_next_state_feasible(next_state, x_dim, x_bounds)
 
             end
+
+            (next_V_x_w == Inf) || (admissible_u_w_count  += 1)
 
             if (next_V_x_w < best_V_x_w)
                     best_V_x_w = next_V_x_w
@@ -479,7 +479,7 @@ function exhaustive_random_hd_get_u(x_bounds::Array,
         end
     end
 
-    return optimal_u, best_V_x_w, admissible_u_w_count
+    optimal_u, best_V_x_w, admissible_u_w_count
 end
 
 function solve_outer_lp_dh(samples::Array,
