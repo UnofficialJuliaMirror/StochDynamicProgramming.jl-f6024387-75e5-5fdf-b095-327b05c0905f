@@ -234,8 +234,11 @@ function compute_value_functions_grid(model::SPModel,
     #Compute final value functions
     initialize_final_value!(fin_cost, product_states, x_bounds, x_steps, V)
 
+    product_controls = []
+
     if param.infoStructure == :hd
         if isa(param, ExhaustiveSdpParameters)
+            product_controls = generate_control_grid(model, param)
             if param.dynamicsType == :classic
                 get_V_t_x = BellmanSolvers.exhaustive_search_hd
             else
@@ -248,6 +251,7 @@ function compute_value_functions_grid(model::SPModel,
         param.infoStructure == :dh || warn("Information structure defaulted to DH")
         param.infoStructure = :dh
         get_V_t_x = BellmanSolvers.exhaustive_search_dh
+        product_controls = generate_control_grid(model, param)
     end
 
     #Construct a progress meter
@@ -257,7 +261,6 @@ function compute_value_functions_grid(model::SPModel,
         println("Starting resolution by SDP")
     end
 
-    product_controls = generate_control_grid(model, param)
     # Loop over time:
     for t = (TF-1):-1:1
 

@@ -11,18 +11,17 @@
 #         u_t choosen knowing xi_1 .. xi_t
 #############################################################################
 
-using StochDynamicProgramming, Clp
+using StochDynamicProgramming, CPLEX
 println("library loaded")
 
-run_sddp = true # false if you don't want to run sddp
-run_sdp  = true # false if you don't want to run sdp
-run_ef   = true # false if you don't want to run extensive formulation
+run_exhaustive_sdp  = true # false if you don't want to run sdp
+run_lp_sdp   = true # false if you don't want to run extensive formulation
 test_simulation = true # false if you don't want to test your strategies
 
 ######## Optimization parameters  ########
 # choose the LP solver used.
-SOLVER = ClpSolver() 			   # require "using Clp"
-#const SOLVER = CplexSolver(CPX_PARAM_SIMDISPLAY=0) # require "using CPLEX"
+#SOLVER = ClpSolver() 			   # require "using Clp"
+SOLVER = CplexSolver(CPX_PARAM_SIMDISPLAY=0) # require "using CPLEX"
 
 # convergence test
 MAX_ITER = 10 # number of iterations of SDDP
@@ -31,7 +30,6 @@ step = 0.01   # discretization step of SDP
 ######## Stochastic Model  Parameters  ########
 N_STAGES = 6              # number of stages of the SP problem
 COSTS = [sin(3*t)-1 for t in 1:N_STAGES-1]
-#const COSTS = rand(N_STAGES)    # randomly generating deterministic costs
 
 CONTROL_MAX = 0.5         # bounds on the control
 CONTROL_MIN = 0
@@ -65,51 +63,37 @@ spmodel = StochDynModel(N_STAGES,u_bounds,[S0],cost_t,dynamic,xi_laws,
                         xbounds = s_bounds)
 println("Model set up")
 
-######### Solving the problem via SDDP
-if run_sddp
-    tic()
-    println("Starting resolution by SDDP")
-    # 10 forward pass, stop at MAX_ITER
-    paramSDDP = SDDPparameters(SOLVER,
-                               passnumber=10,
-                               max_iterations=MAX_ITER)
-    sddp = solve_SDDP(spmodel, paramSDDP, 2) # display information every 2 iterations
-    lb_sddp = StochDynamicProgramming.get_lower_bound(spmodel, paramSDDP, sddp.bellmanfunctions)
-    println("Lower bound obtained by SDDP: "*string(round(lb_sddp,4)))
-    toc(); println();
-end
-
 ######### Solving the problem via Dynamic Programming
-if run_sdp
+if run_exhaustive_sdp
     tic()
-    println("Starting resolution by SDP")
+    println("Starting exhaustive resolution by SDP")
     stateSteps = [step] # discretization step of the state
     controlSteps = [step] # discretization step of the control
     paramSDP = ExhaustiveSdpParameters(stateSteps, controlSteps, infoStructure = :hd)
-    @time Vs = solve_dp(spmodel,paramSDP, 1)
+    Vs = solve_dp(spmodel,paramSDP, 1)
     value_sdp = StochDynamicProgramming.get_bellman_value(spmodel,paramSDP,Vs)
     println("Value obtained by SDP: "*string(round(value_sdp,4)))
     toc(); println();
 end
 
 ######### Solving the problem via Extensive Formulation
-if run_ef
+if run_lp_sdp
     tic()
-    println("Starting resolution by Extensive Formulation")
-    value_ef = extensive_formulation(spmodel, paramSDDP)[1]
-    println("Value obtained by Extensive Formulation: "*string(round(value_ef,4)))
-    println("Relative error of SDP value: "*string(100*round(abs(value_sdp/value_ef)-1,4))*"%")
-    println("Relative error of SDDP lower bound: "*string(100*round(abs(lb_sddp/value_ef)-1,4))*"%")
+    println("Starting LP resolution by SDP")
+    paramLPSDP = MathProgSdpParameters(stateSteps, SOLVER, infoStructure = :hd)
+    Vslp = solve_dp(spmodel,paramLPSDP, 1)
+    value_sdp = StochDynamicProgramming.get_bellman_value(spmodel,paramLPSDP,Vslp)
+    println("Value obtained by SDP: "*string(round(value_sdp,4)))
     toc(); println();
 end
 
 ######### Comparing the solutions on simulated scenarios.
 
 #srand(1234) # to fix the random seed accross runs
-if run_sddp && run_sdp && test_simulation
-    scenarios = StochDynamicProgramming.simulate_scenarios(xi_laws,1000)
-    costsddp, stocks = forward_simulations(spmodel, paramSDDP, sddp.solverinterface, scenarios)
-    costsdp, states, controls = forward_simulations(spmodel,paramSDP, Vs, scenarios)
-    println("Simulated relative gain of sddp over sdp: "
-            *string(round(200*mean(costsdp-costsddp)/abs(mean(costsddp+costsdp)),3))*"%")
-end
+# if run_sddp && run_sdp && test_simulation
+#     scenarios = StochDynamicProgramming.simulate_scenarios(xi_laws,1000)
+#     costsddp, stocks = forward_simulations(spmodel, paramSDDP, sddp.solverinterface, scenarios)
+#     costsdp, states, controls = forward_simulations(spmodel,paramSDP, Vs, scenarios)
+#     println("Simulated relative gain of sddp over sdp: "
+#             *string(round(200*mean(costsdp-costsddp)/abs(mean(costsddp+costsdp)),3))*"%")
+# end

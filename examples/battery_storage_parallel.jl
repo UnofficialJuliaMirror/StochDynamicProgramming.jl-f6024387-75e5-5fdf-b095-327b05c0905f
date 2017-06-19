@@ -39,12 +39,12 @@ println("library loaded")
 
     ######## Stochastic Model  Parameters  ########
     srand(1234) #Seed is essential when defining random variables accross multiple workers
-    const N_STAGES = 50
+    const N_STAGES = 51
     const COSTS = rand(N_STAGES)
     const DEMAND = rand(N_STAGES)
 
     const CONTROL_MAX = 0.5
-    const CONTROL_MIN = 0
+    const CONTROL_MIN = -0.5
 
     const STATE_MAX = 1
     const STATE_MIN = 0
@@ -93,7 +93,7 @@ println("library loaded")
 
     paramSDP = StochDynamicProgramming.ExhaustiveSdpParameters(stateSteps,
                                                     controlSteps,
-                                                    infoStructure = "HD")
+                                                    infoStructure = :hd)
 end
 
 @time  Vs = StochDynamicProgramming.solve_dp(spmodel,paramSDP, 1)

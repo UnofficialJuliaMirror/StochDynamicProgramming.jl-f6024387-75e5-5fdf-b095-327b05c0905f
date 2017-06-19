@@ -91,15 +91,16 @@ type MathProgSdpParameters <: SdpParameters
 
     stateSteps::Array
     solver::MathProgBase.AbstractMathProgSolver
-    programType::String # LP or MILP (SOS2 constraints) or NLP
-    infoStructure::String
+    programType::Symbol # LP or MILP (SOS2 constraints) or NLP
+    infoStructure::Symbol
     expectation_computation::String
     monteCarloSize::Int
+    buildSearchSpace::Nullable{Function}
 
     function MathProgSdpParameters(stateSteps::Array, solver; programType = :lp,
                                 infoStructure = :dh,
                                 expectation_computation="Exact",
-                                monteCarloSize=1000)
+                                monteCarloSize=1000, search_space_builder = Nullable{Function}())
 
         if (expectation_computation != "Exact") && (expectation_computation != "MonteCarlo")
             warn("Expectation computation defaulted to Exact")
@@ -107,7 +108,7 @@ type MathProgSdpParameters <: SdpParameters
         end
 
         return new(stateSteps, solver, programType, infoStructure,
-                    expectation_computation, monteCarloSize)
+                    expectation_computation, monteCarloSize, search_space_builder)
     end
 
 end

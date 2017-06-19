@@ -32,7 +32,13 @@ value functions
 
 """
 function index_from_variable(variable::Union{Array,Tuple}, bounds::Array, variable_steps::Array)
-    return [ 1 + floor(Int64,(1e-10+( variable[i] - bounds[i][1] )/ variable_steps[i] )) for i in 1:length(variable)]
+    return [ 1 + floor(Int,(1e-10+( x[i] - bounds[i][1] )/ variable_steps[i] )) for (i,x) in enumerate(variable)]
+end
+
+function index_from_variable!(ind::Array, variable::Union{Array,Tuple}, bounds::Array, variable_steps::Array)
+    for (i,x) in 1:enumerate(ind)
+        ind[i] = 1 + floor(Int,(1e-10+( variable[i] - bounds[i][1] )/ variable_steps[i] ))
+    end
 end
 
 
@@ -55,7 +61,13 @@ value function
 
 """
 function real_index_from_variable(variable::Union{Array,Tuple}, bounds::Array, variable_steps::Array)
-    return [1 + ( variable[i] - bounds[i][1] )/variable_steps[i] for i in 1:length(variable)]
+    return [1 + ( x - bounds[i][1] )/variable_steps[i] for (i,x) in enumerate(variable)]
+end
+
+function real_index_from_variable!(ind::Array, variable::Union{Array,Tuple}, bounds::Array, variable_steps::Array)
+    for (i,x) in enumerate(ind)
+        ind[i] = 1 + ( variable[i] - bounds[i][1] )/variable_steps[i]
+    end
 end
 
 """
@@ -76,15 +88,12 @@ Check if next state x_{t+1} satisfies state bounds constraints
 """
 function is_next_state_feasible(next_state::Union{Array,Tuple}, x_dim::Int, x_bounds::Array)
 
-    next_state_box_const = true
+    test = true
+    for (i, x_t) in enumerate(next_state) 
+        test=(x_t.>=x_bounds[i][1]-1e-10)&&(x_t.<=x_bounds[i][2]+1e-10)&&test 
+    end 
+    test
 
-    for i in 1:x_dim
-        next_state_box_const =  (next_state_box_const&&
-                                (next_state[i]>=x_bounds[i][1]-1e-10)&&
-                                (next_state[i]<=x_bounds[i][2]+1e-10))
-    end
-
-    return next_state_box_const
 end
 
 """
@@ -146,6 +155,8 @@ function exhaustive_search_dh(samples::Array,
         controls_search_space = build_Ux(t,x)
     end
 
+    ind_next_state = copy(x_steps)
+
     for u in controls_search_space
 
         expected_V_u = 0.
@@ -160,10 +171,9 @@ function exhaustive_search_dh(samples::Array,
 
                 count_admissible_w = count_admissible_w + proba
 
-                ind_next_state = real_index_from_variable(next_state, x_bounds,
-                                                            x_steps)
-                next_V = Vitp[ind_next_state...]
-                expected_V_u += proba*(cost(t, x, u, w_sample) + next_V)
+                real_index_from_variable!(ind_next_state, next_state, x_bounds, x_steps)
+
+                expected_V_u += proba*(cost(t, x, u, w_sample) + Vitp[ind_next_state...])
 
             end
 
@@ -411,27 +421,30 @@ function exhaustive_search_hd_get_u(x_bounds::Array,
     next_V_x_w = Inf
     optimal_u = tuple()
     admissible_u_w_count = 0
+    ind_next_state = copy(x_steps)
 
     for u in product_controls
 
-        next_state = dynamics(t, x, u, w)
+        if constraints(t, x, u, w)
 
-        if constraints(t, x, u, w)&&is_next_state_feasible(next_state, x_dim,
-                                                            x_bounds)
-            admissible_u_w_count  += 1
-            ind_next_state = real_index_from_variable(next_state, x_bounds,
-                                                        x_steps)
-            next_V_x_w = cost(t, x, u, w) + Vitp[ind_next_state...]
+            next_state = dynamics(t, x, u, w)
 
-            if (next_V_x_w < best_V_x_w)
-                best_V_x_w = next_V_x_w
-                optimal_u = u
+            if is_next_state_feasible(next_state, x_dim, x_bounds)
+                admissible_u_w_count  += 1
+                real_index_from_variable!(ind_next_state, next_state, x_bounds,
+                                                            x_steps)
+                next_V_x_w = cost(t, x, u, w) + Vitp[ind_next_state...]
+
+                if (next_V_x_w < best_V_x_w)
+                    best_V_x_w = next_V_x_w
+                    optimal_u = u
+                end
             end
 
         end
     end
 
-    return optimal_u, best_V_x_w, admissible_u_w_count
+    optimal_u, best_V_x_w, admissible_u_w_count
 end
 
 function exhaustive_random_hd_get_u(x_bounds::Array,
@@ -451,6 +464,8 @@ function exhaustive_random_hd_get_u(x_bounds::Array,
     optimal_u = tuple()
     admissible_u_w_count = 0
 
+    ind_next_state = copy(x_steps)
+
     for u in product_controls
 
         random_next_state = dynamics(t, x, u, w)
@@ -463,7 +478,7 @@ function exhaustive_random_hd_get_u(x_bounds::Array,
 
                 next_state = random_next_state.support[:,ip]
 
-                ind_next_state = real_index_from_variable(next_state, x_bounds,
+                real_index_from_variable!(ind_next_state, next_state, x_bounds,
                                                             x_steps)
                 
                 next_V_x_w += random_next_state.proba[ip]*Vitp[ind_next_state...] + Inf*~is_next_state_feasible(next_state, x_dim, x_bounds)
@@ -481,6 +496,51 @@ function exhaustive_random_hd_get_u(x_bounds::Array,
 
     optimal_u, best_V_x_w, admissible_u_w_count
 end
+
+
+function solve_inner_lp_hd(samples::Array, probas::Array, x_bounds::Array,
+                        x_steps::Array, x_dim::Int, dynamics::Function,
+                        inequalityConstraints, equalityConstraints, cost::Union{Function},
+                        Vnext::Array, t::Int, x::Union{Array,Tuple}, solver)
+
+    sampling_size = length(probas)
+
+    num_points = length(Vnext)
+
+    m = Model(solver = solver)
+
+    @variable(m, u_bounds[i][2] <= u[1:sampling_size, i=1:u_dim] <= u_bounds[i][2] )
+    @variable(m, α[num_points, 1:sampling_size] >= 0 )
+    @variable(m, x_bounds[i][2] <= xf[1:sampling_size, i=1:u_dim] <= x_bounds[i][2] )
+
+    for iw in 1:sampling_size
+
+        w = samples[iw]
+        pw = probas[iw]
+
+        @constraint(m, sum(α[:, iw]) == 1)
+
+        @constraint(m, sum(α[i,iw].*points[i,:] for i in 1:num_points) .== dynamics(t,x,u[iw,:], w) )
+        
+        if ~isnull(equalityConstraints)
+            @constraint(m, get(equalityConstraints)(t, x, u[iw,:], w) .== 0)
+        end
+        
+        if ~isnull(inequalityConstraints)
+            @constraint(m, get(inequalityConstraints)(t, x, u[iw,:], w) .<= 0)
+        end
+
+    end
+
+    @objective(m, Min, sum(probas[iw]*(cost(t, x, u[iw,:], samples[iw]) + dot(α[:,iw],Vnext)) for iw in 1:sampling_size))
+
+    solve(m)
+
+    expected_V = getobjectivevalue(m)
+
+    return expected_V, getvalue(u)
+end
+
 
 function solve_outer_lp_dh(samples::Array,
                         probas::Array, u_bounds::Array, x_bounds::Array,
@@ -554,45 +614,6 @@ function solve_outer_lp_hd(samples::Array,
     end
 
     @objective(m, Min, sum(probas[iw]*(cost(t, x, u[iw,:], samples[iw]) + α[iw]) for iw in 1:sampling_size))
-
-    solve(m)
-
-    expected_V = getobjectivevalue(m)
-
-    return expected_V
-end
-
-function solve_inner_lp_hd(samples::Array, probas::Array, x_bounds::Array,
-                        x_steps::Array, x_dim::Int, dynamics::Function,
-                        inequalityConstraints, equalityConstraints, cost::Union{Function},
-                        Vnext::Array, t::Int, x::Union{Array,Tuple})
-
-    sampling_size = length(probas)
-
-    num_points = length(Vnext)
-
-    m = Model(solver = solver)
-
-    @variable(m, u_bounds[i][2] <= u[1:sampling_size, i=1:u_dim] <= u_bounds[i][2] )
-    @variable(m, α[num_points, 1:sampling_size] >= 0 )
-    @variable(m, x_bounds[i][2] <= xf[1:sampling_size, i=1:u_dim] <= x_bounds[i][2] )
-
-    for iw in 1:sampling_size
-        w = samples[iw]
-        pw = probas[iw]
-
-        @constraint(m, sum(α[:, iw]) == 1)
-
-        @constraint(m, sum(α[i,iw].*points[i,:] for i in 1:num_points) .== dynamics(t,x,u[iw,:], w) )
-        if ~isnull(equalityConstraints)
-            @constraint(m, get(equalityConstraints)(t, x, u[iw,:], w) .== 0)
-        end
-        if ~isnull(inequalityConstraints)
-            @constraint(m, get(inequalityConstraints)(t, x, u[iw,:], w) .<= 0)
-        end
-    end
-
-    @objective(m, Min, sum(probas[iw]*(cost(t, x, u[iw,:], samples[iw]) + dot(α[:,iw],Vnext)) for iw in 1:sampling_size))
 
     solve(m)
 
