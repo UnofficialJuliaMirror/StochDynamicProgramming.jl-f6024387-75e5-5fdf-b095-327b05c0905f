@@ -159,36 +159,31 @@ function exhaustive_search_dh(samples::Array,
 
     for u in controls_search_space
 
-        expected_V_u = 0.
         count_admissible_w = 0
+        expected_V_u = 0.
 
-        for w = 1:sampling_size
+        for w = 1:sampling_size            
             w_sample = samples[:, w]
             proba = probas[w]
             next_state = dynamics(t, x, u, w_sample)
 
             if constraints(t, x, u, w_sample)&&is_next_state_feasible(next_state, x_dim, x_bounds)
 
-                count_admissible_w = count_admissible_w + proba
-
                 real_index_from_variable!(ind_next_state, next_state, x_bounds, x_steps)
 
                 expected_V_u += proba*(cost(t, x, u, w_sample) + Vitp[ind_next_state...])
+
+                count_admissible_w += 1
 
             end
 
         end
 
-        if (count_admissible_w>0)
+        if (expected_V_u < expected_V)&&(count_admissible_w==sampling_size)
 
-            next_V = next_V / count_admissible_w
+            expected_V = expected_V_u
+            optimal_u = u
 
-            if (expected_V_u < expected_V)
-
-                expected_V = expected_V_u
-                optimal_u = u
-
-            end
         end
     end
 
