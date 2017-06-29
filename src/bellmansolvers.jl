@@ -32,7 +32,11 @@ value functions
 
 """
 function index_from_variable(variable::Union{Array,Tuple}, bounds::Array, variable_steps::Array)
-    return [ 1 + floor(Int,(1e-10+( x[i] - bounds[i][1] )/ variable_steps[i] )) for (i,x) in enumerate(variable)]
+    ind = zeros(Int, length(variable))
+    for (i,x) in enumerate(variable)
+        ind[i] = 1 + floor(Int,(1e-10+( variable[i] - bounds[i][1] )/ variable_steps[i] ))
+    end
+    ind
 end
 
 function index_from_variable!(ind::Array, variable::Union{Array,Tuple}, bounds::Array, variable_steps::Array)
@@ -416,7 +420,7 @@ function exhaustive_search_hd_get_u(x_bounds::Array,
     next_V_x_w = Inf
     optimal_u = tuple()
     admissible_u_w_count = 0
-    ind_next_state = copy(x_steps)
+    ind_next_state = similar(x_steps)
 
     for u in product_controls
 
@@ -459,7 +463,7 @@ function exhaustive_random_hd_get_u(x_bounds::Array,
     optimal_u = tuple()
     admissible_u_w_count = 0
 
-    ind_next_state = copy(x_steps)
+    ind_next_state = similar(x_steps)
 
     for u in product_controls
 
