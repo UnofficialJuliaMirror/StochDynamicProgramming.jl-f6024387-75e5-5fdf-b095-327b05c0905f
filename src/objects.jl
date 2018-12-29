@@ -71,7 +71,7 @@ mutable struct PolyhedralFunction
     newcuts::Int
 end
 
-PolyhedralFunction(n_dim::Int) = PolyhedralFunction(Float64[], Array{Float64}(0, n_dim), 0, UInt64[], 0)
+PolyhedralFunction(n_dim::Int) = PolyhedralFunction(Float64[], Array{Float64}(undef, 0, n_dim), 0, UInt64[], 0)
 PolyhedralFunction(beta, lambda) = PolyhedralFunction(beta, lambda, length(beta), UInt64[], 0)
 
 function fetchnewcuts!(V::PolyhedralFunction)
@@ -103,8 +103,8 @@ mutable struct LinearSPModel <: SPModel
     finalCost::Union{Function, PolyhedralFunction}
 
     controlCat::Vector{Symbol}
-    equalityConstraints::Nullable{Function}
-    inequalityConstraints::Nullable{Function}
+    equalityConstraints::Union{Function, Nothing}
+    inequalityConstraints::Union{Function, Nothing}
     info::Symbol
 
     IS_SMIP::Bool
@@ -143,7 +143,7 @@ mutable struct LinearSPModel <: SPModel
         is_smip = (:Int in isbu)||(:Bin in isbu)
 
         if (x_bounds == nothing)
-            x_bounds = repmat([(-Inf,Inf)],dimStates,n_stage)
+            x_bounds = repeat([(-Inf,Inf)],dimStates,n_stage)
         end
         u_bounds = test_and_reshape_bounds(u_bounds, dimControls,n_stage, "Controls")
 
@@ -166,7 +166,7 @@ If bounds is a vector of length nx (or nx*1 array) duplicate to a matrix nx*ns,
 if already a matrix keep it this way, else return an error"""
 function test_and_reshape_bounds(bounds, nx,ns, variable)
     if (ndims(bounds) == 1 && length(bounds) == nx)||(ndims(bounds) == 2 && size(bounds) == (nx,1))
-        return repmat(bounds,1,ns)
+        return repeat(bounds,1,ns)
     elseif ndims(bounds) == 2 && size(bounds) == (nx,ns)
         return bounds
      else
@@ -215,7 +215,7 @@ mutable struct StochDynProgModel <: SPModel
     constraints::Function
     noises::Vector{NoiseLaw}
 
-    build_search_space::Nullable{Function}
+    build_search_space::Union{Function, Nothing}
 
     function StochDynProgModel(model::LinearSPModel, final, cons)
         if isa(model.costFunctions, Function)
@@ -236,7 +236,7 @@ mutable struct StochDynProgModel <: SPModel
     end
 
     function StochDynProgModel(TF::Int, x_bounds, u_bounds, x0, costFunctions,
-                                finalCostFunction, dynamic, constraints, aleas, search_space_builder = Nullable{Function}())
+                                finalCostFunction, dynamic, constraints, aleas, search_space_builder = nothing)
         dimState = length(x0)
         dimControls = size(u_bounds)[1]
         u_bounds1 = ndims(u_bounds) == 1 ? u_bounds : max_bounds(u_bounds)

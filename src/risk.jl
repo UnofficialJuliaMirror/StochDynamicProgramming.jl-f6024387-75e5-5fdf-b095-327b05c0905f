@@ -80,7 +80,7 @@ Return a dirac on the worst cost as a probability distribution.
 """
 function risk_proba(prob,riskMeasure::WorstCase,costs)
     proba = zeros(length(prob))
-    proba[indmax(costs)] = 1
+    proba[argmax(costs)] = 1
     return proba
 end
 
@@ -122,5 +122,5 @@ defining the convex set P
 function risk_proba(prob,riskMeasure::PolyhedralRisk,costs)
     P = riskMeasure.polyset
     valuesup = P*costs
-    return P[indmax(valuesup),:]
+    return P[argmax(valuesup),:]
 end

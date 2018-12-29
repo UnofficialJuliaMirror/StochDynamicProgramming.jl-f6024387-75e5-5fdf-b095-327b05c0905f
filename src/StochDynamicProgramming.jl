@@ -10,9 +10,10 @@
 
 module StochDynamicProgramming
 
-using MathProgBase, JuMP, Distributions
-using DocStringExtensions
+using MathProgBase, JuMP, Distributions, Statistics, LinearAlgebra, Random
+using DocStringExtensions, DelimitedFiles
 using CutPruners
+using Printf, SharedArrays, Distributed, SpecialFunctions
 
 export solve_SDDP,
         NoiseLaw, simulate_scenarios, simulate,

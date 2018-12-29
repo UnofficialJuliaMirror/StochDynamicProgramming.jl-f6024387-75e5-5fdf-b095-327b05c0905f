@@ -9,7 +9,7 @@
 
 using StochDynamicProgramming
 using Clp, JuMP
-using Base.Test
+using Test
 
 
 # Test utility functions:

@@ -245,7 +245,7 @@ function finalpass!(sddp::SDDPInterface)
         @printf("- Estimation of upper-bound:  %.4e\n", upb)
         @printf("- Upper-bound's s.t.d:        %.4e\n", σ)
         @printf("- Confidence interval (%d%s):  [%.4e , %.4e]",
-                100*(1- 2*(1-param.confidence_level)), '\%',upb-tol, upb+tol)
+                100*(1- 2*(1-param.confidence_level)), '%',upb-tol, upb+tol)
         println("\n", "#"^60)
     end
 end
@@ -267,7 +267,7 @@ function updateSDDP!(sddp::SDDPInterface, lwb, upb, time_pass, trajectories)
     end
 
     # Update regularization
-    if !isnull(sddp.regularizer)
+    if !isa(sddp.regularizer, Nothing)
         (sddp.verbosity >3) && println("Updating regularization ")
         update_penalization!(get(sddp.regularizer))
         get(sddp.regularizer).incumbents = trajectories
@@ -361,10 +361,10 @@ function build_model(model, param, t,verbosity::Int64=0)
     @constraint(m, xf .== model.dynamics(t, x, u, w))
 
     # Add equality and inequality constraints:
-    if ~isnull(model.equalityConstraints)
+    if ~isa(model.equalityConstraints, Nothing)
         @constraint(m, get(model.equalityConstraints)(t, x, u, w) .== 0)
     end
-    if ~isnull(model.inequalityConstraints)
+    if ~isa(model.inequalityConstraints, Nothing)
         @constraint(m, get(model.inequalityConstraints)(t, x, u, w) .<= 0)
     end
 

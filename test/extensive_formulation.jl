@@ -2,7 +2,7 @@
 # Test extensive formulation
 ################################################################################
 
-using StochDynamicProgramming, Base.Test, Clp
+using StochDynamicProgramming, Test, Clp
 
 @testset "Extensive formulation" begin
     solver = ClpSolver()

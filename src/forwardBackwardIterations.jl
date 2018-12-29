@@ -101,8 +101,8 @@ function forward_simulations(model::SPModel,
                             param::SDDPparameters,
                             solverProblems::Vector{JuMP.Model},
                             xi::Array{Float64};
-                            pruner=Nullable{AbstractCutPruner}(),
-                            regularizer=Nullable{SDDPRegularization}(),
+                            pruner=nothing,
+                            regularizer=nothing,
                             verbosity::Int64=0)
 
     callsolver::Int = 0
@@ -141,7 +141,7 @@ function forward_simulations(model::SPModel,
             callsolver += 1
 
             # Solve optimization problem corresponding to current position:
-            if !isnull(regularizer) && !isa(get(regularizer).incumbents, Void)
+            if !isa(regularizer, Nothing) && !isa(get(regularizer).incumbents, Nothing)
                 reg = get(regularizer)
                 xp = getincumbent(reg, t, k)
                 sol, ts = regularize(model, param, reg,
@@ -178,7 +178,7 @@ function forward_simulations(model::SPModel,
                     costs[k] += θ
                 end
                 # update cutpruners status with new point
-                if param.prune && ~isnull(pruner) && t < T-1
+                if param.prune && ~isa(pruner, Nothing) && t < T-1
                     update!(pruner[t+1], sol.xf, sol.πc)
                 end
             else
@@ -359,7 +359,7 @@ function compute_cuts_hd!(model::SPModel, param::SDDPparameters,
         proba = risk_proba(proba,model.riskMeasure,costs)
 
         # Compute expectation of subgradient λ:
-        subgradient = vec(sum(proba' .* subgradient_array, 2))
+        subgradient = vec(sum(proba' .* subgradient_array, dims=2))
         # ... expectation of cost:
         costs_npass = dot(proba, costs)
         # ... and expectation of slope β:

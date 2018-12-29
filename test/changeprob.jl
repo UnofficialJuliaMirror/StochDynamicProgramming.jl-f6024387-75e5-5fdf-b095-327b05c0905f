@@ -1,5 +1,5 @@
-using StochDynamicProgramming, JuMP, Clp
-using Base.Test
+using StochDynamicProgramming, JuMP, Clp, Random
+using Test
 
 const EPSILON = 0.0001
 
@@ -89,11 +89,11 @@ const EPSILON = 0.0001
     # We check equality between polyhedral formulation and AVaR formulation
     @testset "Equality AVaR Polyhedral" begin
         n = 10
-        X = shuffle(collect(linspace(1,100,n)))
+        X = shuffle(collect(range(1,stop=100,length=n)))
         beta = 0.999
         prob = 1/n*ones(n)
 
-        polyset = repmat(1/beta*prob',n)
+        polyset = repeat(1/beta*prob',n)
         for i = 1:n
             polyset[i,i] = (beta*n-n+1)/(n*beta)
         end

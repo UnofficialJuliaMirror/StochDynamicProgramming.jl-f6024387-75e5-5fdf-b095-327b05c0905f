@@ -1,7 +1,7 @@
 ################################################################################
 # Test SDDP functions
 ################################################################################
-using Base.Test, StochDynamicProgramming
+using Test, StochDynamicProgramming
 using StochDynamicProgramming.SdpLoops
 
 @testset "Indexation for SDP" begin

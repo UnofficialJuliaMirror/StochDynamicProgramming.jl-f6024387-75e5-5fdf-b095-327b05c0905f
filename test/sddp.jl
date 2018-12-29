@@ -4,7 +4,7 @@
 
 
 include("framework.jl")
-using Base.Test
+using Test, Statistics, CutPruners
 
 # Test SDDP with a one dimensional stock:
 @testset "SDDP algorithm: 1D case" begin
@@ -127,7 +127,7 @@ using Base.Test
                                                     gap=epsilon,
                                                     max_iterations=max_iterations)
         #TODO: fix solver, as Clp cannot solve QP
-        @test_throws ErrorException solve_SDDP(model, param2, 0, 0,
+        @test_throws MethodError solve_SDDP(model, param2, 0, 0,
                                                 regularization=SDDPRegularization(1., .99))
     end
 

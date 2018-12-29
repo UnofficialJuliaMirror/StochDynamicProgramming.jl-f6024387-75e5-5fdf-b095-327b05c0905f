@@ -19,7 +19,7 @@ mutable struct SDDPInterface
     # cut pruner:
     pruner::Vector{CutPruners.AbstractCutPruner}
     # regularization scheme:
-    regularizer::Nullable{AbstractRegularization}
+    regularizer::Union{AbstractRegularization, Nothing}
 
     # solution
     bellmanfunctions::Vector{PolyhedralFunction}
@@ -85,4 +85,4 @@ function initpruner(algo, n_stages, n_dim)
     return [CutPruners.CutPruner{n_dim, Float64}(algo, :Max) for i in 1:n_stages-1]
 end
 
-isregularized(sddp::SDDPInterface) = !isnull(sddp.regularizer)
+isregularized(sddp::SDDPInterface) = !isa(sddp.regularizer, Nothing)

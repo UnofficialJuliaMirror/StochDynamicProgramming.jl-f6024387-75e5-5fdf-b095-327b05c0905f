@@ -46,7 +46,7 @@ Compute the cartesian products of discretized state spaces
     the cartesian product iterators for states
 
 """
-function generate_state_grid(model::SPModel, param::SDPparameters, w::Nullable{Array} = Nullable{Array}() )
+function generate_state_grid(model::SPModel, param::SDPparameters, w::Union{Array, Nothing} = nothing )
     product_states = Base.product([model.xlim[i][1]:param.stateSteps[i]:model.xlim[i][2] for i in 1:model.dimStates]...)
 
     return collect(product_states)
@@ -71,11 +71,11 @@ Compute the cartesian products of discretized control spaces or more complex spa
 
 """
 function generate_control_grid(model::SPModel, param::SDPparameters,
-                                t::Nullable{Int} = Nullable{Int}(),
-                                x::Nullable{Array} = Nullable{Array}(),
-                                w::Nullable{Array} = Nullable{Array}())
+                                t::Union{Int, Nothing} = nothing,
+                                x::Union{Array, Nothing} = nothing,
+                                w::Union{Array, Nothing} = nothing)
 
-    if (isnull(model.build_search_space))||(isnull(t))||(isnull(x))
+    if (isa(model.build_search_space, Nothing))||(isa(t, Nothing))||(isa(x, Nothing))
         product_controls = Base.product([model.ulim[i][1]:param.controlSteps[i]:model.ulim[i][2] for i in 1:model.dimControls]...)
     else
         product_controls = model.build_search_space(t, x, w)
@@ -246,7 +246,7 @@ function compute_value_functions_grid(model::StochDynProgModel,
 
         Vitp = value_function_interpolation(x_dim, V, t+1)
 
-        @sync @parallel for indx in 1:length(product_states)
+        @sync @distributed for indx in 1:length(product_states)
             x = product_states[indx]
             ind_x = SdpLoops.index_from_variable(x, x_bounds, x_steps)
             V[ind_x..., t] = get_V_t_x(sampling_size, samples, probas,
@@ -306,7 +306,7 @@ hazard case
 
 """
 function get_control(model::SPModel,param::SDPparameters,
-                     V, t::Int64, x::Array, w::Union{Void, Array} = nothing)
+                     V, t::Int64, x::Array, w::Union{Nothing, Array} = nothing)
 
     sdp_model = build_sdpmodel_from_spmodel(model)
 
@@ -320,7 +320,7 @@ function get_control(model::SPModel,param::SDPparameters,
             sampling_size = param.monteCarloSize
             push!(args,sampling_size,
                     [sampling(law,t) for i in 1:sampling_size],
-                    (1./sampling_size)*ones(sampling_size))
+                    (1. / sampling_size)*ones(sampling_size))
         else
             push!(args,law[t].supportSize, law[t].support, law[t].proba)
         end
@@ -408,10 +408,10 @@ function forward_simulations(model::SPModel,
         get_u = SdpLoops.sdp_dh_get_u
     end
 
-    build_Ux = Nullable{Function}(SDPmodel.build_search_space)
+    build_Ux = SDPmodel.build_search_space
 
 
-    @sync @parallel for s in 1:nb_scenarios
+    @sync @distributed for s in 1:nb_scenarios
 
         current_scen = scenarios[:,s,:]
 
@@ -428,7 +428,7 @@ function forward_simulations(model::SPModel,
                     sampling_size = param.monteCarloSize
                     push!(args_w,sampling_size,
                             [sampling(law,t) for i in 1:sampling_size],
-                            (1./sampling_size)*ones(sampling_size))
+                            (1. / sampling_size)*ones(sampling_size))
                 else
                     push!(args_w,law[t].supportSize, law[t].support, law[t].proba)
                 end

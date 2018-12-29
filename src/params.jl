@@ -8,9 +8,9 @@
 
 mutable struct SDDPparameters
     # Solver used to solve LP
-    SOLVER::MathProgBase.AbstractMathProgSolver
+    SOLVER # What type??
     # Solver used to solve MILP (default is nothing):
-    MIPSOLVER::Nullable{MathProgBase.AbstractMathProgSolver}
+    MIPSOLVER # What type??
     # number of scenarios in the forward pass
     forwardPassNumber::Int64
     # max iterations
@@ -55,7 +55,7 @@ Test compatibility of parameters.
 `Bool`
 """
 function check_SDDPparameters(model::SPModel, param::SDDPparameters, verbosity=0::Int64)
-    if model.IS_SMIP && isnull(param.MIPSOLVER)
+    if model.IS_SMIP && isa(param.MIPSOLVER, Nothing)
         error("MIP solver is not defined. Please set `param.MIPSOLVER`")
     end
 
