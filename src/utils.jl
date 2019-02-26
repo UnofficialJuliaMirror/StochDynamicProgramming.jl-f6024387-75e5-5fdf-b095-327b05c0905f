@@ -7,12 +7,12 @@
 #
 #############################################################################
 
-import Base: +, show, writecsv
+import Base: +, show
+import Printf: @printf
 
 """
 Write Polyhedral functions in a CSV file.
 
-$(SIGNATURES)
 
 # Arguments
 * `filename::String`:
@@ -99,11 +99,11 @@ Pass number     Upper bound     Lower bound     exectime
 
 """
 function Base.show(io::IO, stats::SDDPStat)
-    print("Pass n\° ", stats.niterations)
-    if stats.niterations == 0 return end
-    (stats.upper_bounds[end] < Inf) && @printf("\tUpper-bound: %.4e", stats.upper_bounds[end])
-    @printf("\tLower-bound: %.4e", stats.lower_bounds[end])
-    print("\tTime: ", round(stats.exectime[end], 2),"s")
+    #= print("Pass n\° ", stats.niterations) =#
+    #= if stats.niterations == 0 return end =#
+    #= (stats.upper_bounds[end] < Inf) && @printf("\tUpper-bound: %.4e", stats.upper_bounds[end]) =#
+    #= @printf("\tLower-bound: %.4e", stats.lower_bounds[end]) =#
+    #= print("\tTime: ", round(stats.exectime[end], 2),"s") =#
 end
 
 """Check if `k` is congruent with current iteration `it`."""

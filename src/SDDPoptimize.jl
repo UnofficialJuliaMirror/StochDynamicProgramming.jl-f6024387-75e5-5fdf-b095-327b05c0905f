@@ -14,7 +14,6 @@ export solve_SDDP, solve!
 """
 Solve spmodel using SDDP algorithm and return `SDDPInterface` instance.
 
-$(SIGNATURES)
 
 # Description
 Alternate forward and backward phases untill the stopping criterion is
@@ -57,7 +56,6 @@ end
 Solve spmodel using SDDP algorithm and return `SDDPInterface` instance.
 Use hotstart.
 
-$(SIGNATURES)
 
 # Description
 Alternate forward and backward phases untill the stopping criterion is
@@ -94,7 +92,6 @@ end
 
 """Run SDDP iterations on `sddp::SDDPInterface` instance.
 
-$(SIGNATURES)
 
 # Description
 This function modifies `sddp`:
@@ -240,12 +237,13 @@ function finalpass!(sddp::SDDPInterface)
 
         println("\n", "#"^60)
         println("SDDP CONVERGENCE")
-        @printf("- Exact lower bound:          %.4e [Gap < %.2f%s]\n",
-                lwb, 100*(upb+tol-lwb)/lwb, '%')
-        @printf("- Estimation of upper-bound:  %.4e\n", upb)
-        @printf("- Upper-bound's s.t.d:        %.4e\n", σ)
-        @printf("- Confidence interval (%d%s):  [%.4e , %.4e]",
-                100*(1- 2*(1-param.confidence_level)), '\%',upb-tol, upb+tol)
+        # TODO
+        #= @printf("- Exact lower bound:          %.4e [Gap < %.2f%s]\n", =#
+        #=         lwb, 100*(upb+tol-lwb)/lwb, '%') =#
+        #= @printf("- Estimation of upper-bound:  %.4e\n", upb) =#
+        #= @printf("- Upper-bound's s.t.d:        %.4e\n", σ) =#
+        #= @printf("- Confidence interval (%d%s):  [%.4e , %.4e]", =#
+        #=         100*(1- 2*(1-param.confidence_level)), '\%',upb-tol, upb+tol) =#
         println("\n", "#"^60)
     end
 end
@@ -278,7 +276,6 @@ end
 """
 Build final cost with PolyhedralFunction function `Vt`.
 
-$(SIGNATURES)
 
 # Arguments
 * `model::SPModel`:
@@ -318,7 +315,6 @@ end
 """
 Initialize each linear problem used to approximate value functions
 
-$(SIGNATURES)
 
 # Description
 This function define the variables and the constraints of each
@@ -446,7 +442,6 @@ end
 """
 Initialize value functions along a given trajectory
 
-$(SIGNATURES)
 
 # Description
 This function add the fist cut to each PolyhedralFunction stored in a Array
@@ -490,7 +485,6 @@ getemptyvaluefunctions(model) = PolyhedralFunction[PolyhedralFunction(model.dimS
 """
 Run SDDP iteration with random forward pass.
 
-$(SIGNATURES)
 
 # Parameters
 * `sddp:SDDPInterface`
@@ -518,7 +512,6 @@ end
 Initialize JuMP.Model vector with a previously computed PolyhedralFunction
 vector.
 
-$(SIGNATURES)
 
 # Arguments
 * `model::SPModel`:
@@ -561,7 +554,6 @@ end
 """
 Compute value of Bellman function at point `xt`. Return `V_t(xt)`.
 
-$(SIGNATURES)
 
 # Arguments
 * `model::SPModel`:
@@ -597,7 +589,6 @@ end
 """
 Get lower bound of SDDP instance `sddp`.
 
-$(SIGNATURES)
 
 """
 lowerbound(sddp::SDDPInterface) = get_bellman_value(sddp.spmodel, sddp.params, 1,
@@ -608,7 +599,6 @@ lowerbound(sddp::SDDPInterface) = get_bellman_value(sddp.spmodel, sddp.params, 1
 """
 Compute lower-bound of the problem at initial time.
 
-$(SIGNATURES)
 
 # Arguments
 * `model::SPModel`:
@@ -631,7 +621,6 @@ get_lower_bound(sddp::SDDPInterface)=lowerbound(sddp::SDDPInterface)
 """
 Compute optimal control at point xt and time t.
 
-$(SIGNATURES)
 
 # Arguments
 * `model::SPModel`:
@@ -659,7 +648,6 @@ end
 """
 Add several cuts to JuMP.Model from a PolyhedralFunction
 
-$(SIGNATURES)
 
 # Arguments
 * `model::SPModel`:

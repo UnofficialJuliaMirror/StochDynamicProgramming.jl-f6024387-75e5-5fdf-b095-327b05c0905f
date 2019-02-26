@@ -99,7 +99,8 @@ function solve_one_step_one_alea(model,
     end
 
     # get time taken by the solver:
-    solvetime = try getsolvetime(m) catch 0 end
+    # TODO
+    solvetime = 0
 
     if solved
         optimalControl = getvalue(u)
@@ -149,7 +150,8 @@ function solve_dh(model, param, t, xt, m; verbosity::Int64=0)
         warn("dh model not solved at time t=",t)
     end
 
-    solvetime = try getsolvetime(m) catch 0 end
+    # TODO
+    solvetime = 0
 
     if solved
         # Computation of subgradient:

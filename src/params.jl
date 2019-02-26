@@ -10,7 +10,7 @@ mutable struct SDDPparameters
     # Solver used to solve LP
     SOLVER::MathProgBase.AbstractMathProgSolver
     # Solver used to solve MILP (default is nothing):
-    MIPSOLVER::Nullable{MathProgBase.AbstractMathProgSolver}
+    MIPSOLVER # TODO
     # number of scenarios in the forward pass
     forwardPassNumber::Int64
     # max iterations

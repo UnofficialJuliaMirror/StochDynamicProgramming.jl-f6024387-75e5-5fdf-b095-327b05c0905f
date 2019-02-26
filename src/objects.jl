@@ -103,8 +103,8 @@ mutable struct LinearSPModel <: SPModel
     finalCost::Union{Function, PolyhedralFunction}
 
     controlCat::Vector{Symbol}
-    equalityConstraints::Nullable{Function}
-    inequalityConstraints::Nullable{Function}
+    equalityConstraints
+    inequalityConstraints
     info::Symbol
 
     IS_SMIP::Bool
@@ -215,7 +215,7 @@ mutable struct StochDynProgModel <: SPModel
     constraints::Function
     noises::Vector{NoiseLaw}
 
-    build_search_space::Nullable{Function}
+    build_search_space
 
     function StochDynProgModel(model::LinearSPModel, final, cons)
         if isa(model.costFunctions, Function)
@@ -236,7 +236,7 @@ mutable struct StochDynProgModel <: SPModel
     end
 
     function StochDynProgModel(TF::Int, x_bounds, u_bounds, x0, costFunctions,
-                                finalCostFunction, dynamic, constraints, aleas, search_space_builder = Nullable{Function}())
+                                finalCostFunction, dynamic, constraints, aleas, search_space_builder)
         dimState = length(x0)
         dimControls = size(u_bounds)[1]
         u_bounds1 = ndims(u_bounds) == 1 ? u_bounds : max_bounds(u_bounds)

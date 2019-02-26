@@ -1,7 +1,8 @@
 julia 0.6
-JuMP 0.18
+JuMP 0.18 0.18.5+
+MathProgBase 
 Distributions
 ProgressMeter
 Interpolations
 CutPruners 0.0.2 
-DocStringExtensions
+Printf

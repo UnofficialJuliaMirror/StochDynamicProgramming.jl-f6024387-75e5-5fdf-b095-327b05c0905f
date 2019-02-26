@@ -101,8 +101,8 @@ function forward_simulations(model::SPModel,
                             param::SDDPparameters,
                             solverProblems::Vector{JuMP.Model},
                             xi::Array{Float64};
-                            pruner=Nullable{AbstractCutPruner}(),
-                            regularizer=Nullable{SDDPRegularization}(),
+                            pruner=nothing,
+                            regularizer=nothing,
                             verbosity::Int64=0)
 
     callsolver::Int = 0

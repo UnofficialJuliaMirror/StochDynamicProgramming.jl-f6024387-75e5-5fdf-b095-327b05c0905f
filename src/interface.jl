@@ -19,7 +19,7 @@ mutable struct SDDPInterface
     # cut pruner:
     pruner::Vector{CutPruners.AbstractCutPruner}
     # regularization scheme:
-    regularizer::Nullable{AbstractRegularization}
+    regularizer
 
     # solution
     bellmanfunctions::Vector{PolyhedralFunction}
