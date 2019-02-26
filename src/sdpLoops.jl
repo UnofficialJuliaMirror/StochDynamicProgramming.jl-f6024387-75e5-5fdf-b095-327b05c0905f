@@ -135,7 +135,7 @@ function sdp_u_w_loop(sampling_size::Int, samples::Array,
                         x_steps::Array, x_dim::Int, product_controls::Array,
                         dynamics::Function, constraints::Function, cost::Function,
                         Vitp, t::Int, x::Union{Array,Tuple},
-                        build_Ux::Nullable{Function} = Nullable{Function}())
+                        build_Ux)
     expected_V = Inf
     optimal_u = tuple()
     #Loop over controls
@@ -283,7 +283,7 @@ function sdp_w_u_loop(sampling_size::Int, samples::Array,
                         x_steps::Array, x_dim::Int, product_controls::Array,
                         dynamics::Function, constraints::Function, cost::Function,
                         Vitp, t::Int, x::Union{Array,Tuple},
-                        build_Ux::Nullable{Function} = Nullable{Function}())
+                        build_Ux)
 
     expected_V = 0.
     count_admissible_w = 0.
@@ -361,7 +361,7 @@ function sdp_hd_get_u(u_bounds::Array, x_bounds::Array,
                         x_steps::Array, x_dim::Int, product_controls::Array,
                         dynamics::Function, constraints::Function, cost::Function,
                         Vitp, t::Int, x::Union{Array,Tuple}, w::Union{Array,Tuple},
-                        build_Ux::Nullable{Function} = Nullable{Function}())
+                        build_Ux)
 
     if isnull(build_Ux)
         controls_search_space = product_controls

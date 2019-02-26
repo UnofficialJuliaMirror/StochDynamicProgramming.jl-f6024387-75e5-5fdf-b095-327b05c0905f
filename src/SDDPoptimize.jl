@@ -265,11 +265,11 @@ function updateSDDP!(sddp::SDDPInterface, lwb, upb, time_pass, trajectories)
     end
 
     # Update regularization
-    if !isnull(sddp.regularizer)
-        (sddp.verbosity >3) && println("Updating regularization ")
-        update_penalization!(get(sddp.regularizer))
-        get(sddp.regularizer).incumbents = trajectories
-    end
+    #= if !isnull(sddp.regularizer) =#
+    #=     (sddp.verbosity >3) && println("Updating regularization ") =#
+    #=     update_penalization!(get(sddp.regularizer)) =#
+    #=     get(sddp.regularizer).incumbents = trajectories =#
+    #= end =#
 end
 
 
@@ -298,10 +298,10 @@ function build_terminal_cost!(model::SPModel, problem::JuMP.Model,
         for i in 1:Vt.numCuts
             lambda = vec(Vt.lambdas[i, :])
             if model.info == :HD
-                @constraint(problem, Vt.betas[i] + dot(lambda, xf) <= alpha)
+                @constraint(problem, Vt.betas[i] + lambda' * xf <= alpha)
             elseif model.info == :DH
                 for ww=1:length(model.noises[t].proba)
-                    @constraint(problem, Vt.betas[i] + dot(lambda, xf[:, ww]) <= alpha[ww])
+                    @constraint(problem, Vt.betas[i] + lambda' * xf[:, ww] <= alpha[ww])
                 end
             end
         end
@@ -339,7 +339,7 @@ end
 
 
 function build_model(model, param, t,verbosity::Int64=0)
-    m = Model(solver=param.SOLVER)
+    m = Model(with_optimizer(param.SOLVER))
 
     nx = model.dimStates
     nu = model.dimControls
@@ -357,10 +357,10 @@ function build_model(model, param, t,verbosity::Int64=0)
     @constraint(m, xf .== model.dynamics(t, x, u, w))
 
     # Add equality and inequality constraints:
-    if ~isnull(model.equalityConstraints)
+    if ~isnothing(model.equalityConstraints)
         @constraint(m, get(model.equalityConstraints)(t, x, u, w) .== 0)
     end
-    if ~isnull(model.inequalityConstraints)
+    if ~isnothing(model.inequalityConstraints)
         @constraint(m, get(model.inequalityConstraints)(t, x, u, w) .<= 0)
     end
 
@@ -385,12 +385,8 @@ function build_model(model, param, t,verbosity::Int64=0)
     # store number of cuts
     m.ext[:ncuts] = 0
 
-    # Add binary variable if problem is a SMIP:
-    if model.IS_SMIP
-        m.colCat[2*nx+1:2*nx+nu] = model.controlCat
-    end
-
-    (verbosity >5) && print(m)
+    # TODO: add support for mixed integer variable
+    (verbosity > 5) && print(m)
     return m
 end
 
@@ -573,17 +569,17 @@ Bellman value (Float64)
 function get_bellman_value(model::SPModel, param::SDDPparameters,
                            t::Int64, Vt::PolyhedralFunction, xt::Vector{Float64})
 
-    m = Model(solver=param.SOLVER)
+    m = Model(with_optimizer(param.SOLVER))
     @variable(m, alpha)
 
     for i in 1:Vt.numCuts
         lambda = vec(Vt.lambdas[i, :])
-        @constraint(m, Vt.betas[i] + dot(lambda, xt) <= alpha)
+        @constraint(m, Vt.betas[i] + lambda' * xt <= alpha)
     end
 
     @objective(m, Min, alpha)
-    solve(m)
-    return getvalue(alpha)
+    JuMP.optimize!(m)
+    return JuMP.getvalue(alpha)
 end
 
 """
@@ -666,10 +662,10 @@ function add_cuts_to_model!(model::SPModel, t::Int64, problem::JuMP.Model, V::Po
     for i in 1:V.numCuts
         lambda = vec(V.lambdas[i, :])
         if model.info == :HD
-            @constraint(problem, V.betas[i] + dot(lambda, xf) <= alpha)
+            @constraint(problem, V.betas[i] + lambda' * xf <= alpha)
         elseif model.info == :DH
             for j in 1:model.noises[t].supportSize
-                @constraint(problem, V.betas[i] + dot(lambda, xf[:, j]) <= alpha[j])
+                @constraint(problem, V.betas[i] + lambda' * xf[:, j] <= alpha[j])
             end
         end
     end
@@ -715,8 +711,8 @@ function get_subgradient(Vt::PolyhedralFunction, x::Vector{Float64})
     index = 0
     for i in 1:Vt.numCuts
         lambda = vec(Vt.lambdas[i, :])
-        if Vt.betas[i] + dot(lambda, x) >= maxvalue
-            maxvalue = Vt.betas[i] + dot(lambda, x)
+        if Vt.betas[i] + lambda' * x >= maxvalue
+            maxvalue = Vt.betas[i] + lambda' * x
             index = i
         end
     end
@@ -727,6 +723,6 @@ end
 function setupperbound!(sddp, ubp)
     for m in sddp.solverinterface
         alpha = m[:alpha]
-        JuMP.setupperbound.(alpha, ubp)
+        JuMP.set_upper_bound.(alpha, ubp)
     end
 end

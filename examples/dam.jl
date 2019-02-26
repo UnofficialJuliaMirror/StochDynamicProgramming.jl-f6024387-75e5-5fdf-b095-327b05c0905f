@@ -22,7 +22,7 @@ alea_year = Array([7.0 7.0 8.0 3.0 1.0 1.0 3.0 4.0 3.0 2.0 6.0 5.0 2.0 6.0 4.0 7
 
 
 # COST:
-const COST = -66*2.7*(1 + .5*(rand(N_STAGES) - .5))
+const COST = -66*2.7*(1 .+ .5*(rand(N_STAGES) .- .5))
 
 # Constants:
 const VOLUME_MAX = 100
@@ -42,7 +42,7 @@ const X0 = [90]
 
 # Define aleas' space:
 const N_ALEAS = Int(round(Int, (W_MAX - W_MIN) / DW + 1))
-const ALEAS = linspace(W_MIN, W_MAX, N_ALEAS)
+const ALEAS = range(W_MIN, stop=W_MAX, length=N_ALEAS)
 
 
 # Define dynamic of the dam:
@@ -86,7 +86,7 @@ function build_aleas()
     aleas = zeros(N_ALEAS, N_STAGES)
 
     # take into account seasonality effects:
-    unorm_prob = linspace(1, N_ALEAS, N_ALEAS)
+    unorm_prob = range(1, stop=N_ALEAS, length=N_ALEAS)
     proba1 = unorm_prob / sum(unorm_prob)
     proba2 = proba1[N_ALEAS:-1:1]
 
@@ -120,13 +120,13 @@ Return a Vector{NoiseLaw}"""
 function generate_probability_laws()
     aleas = build_scenarios(N_SCENARIOS, build_aleas())
 
-    laws = Vector{NoiseLaw}(N_STAGES-1)
+    laws = NoiseLaw[]
 
     # uniform probabilities:
     proba = 1/N_SCENARIOS*ones(N_SCENARIOS)
 
     for t=1:(N_STAGES-1)
-        laws[t] = NoiseLaw(aleas[:, t], proba)
+        push!(laws, NoiseLaw(aleas[:, t], proba))
     end
 
     return laws
@@ -170,3 +170,5 @@ function solve_dams(display=0)
     println("SDDP cost: ", costs)
     return stocks
 end
+
+solve_dams(1)

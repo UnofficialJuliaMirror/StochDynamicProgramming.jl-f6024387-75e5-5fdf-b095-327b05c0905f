@@ -14,7 +14,6 @@ where P is a convex set of probability distribution.
 The function returns the argsup allowing to compute the
 risk measure as a expectation
 
-$(SIGNATURES)
 
 # Description
 Return the probability among the set of possible probabilities
@@ -38,7 +37,6 @@ function risk_proba(prob, riskMeasure::RiskMeasure,costs)
 end
 
 """
-$(TYPEDEF)
 
 Return the probability distribution to compute a Average Value at Risk of level beta.
 """
@@ -65,7 +63,6 @@ function risk_proba(prob,riskMeasure::AVaR,costs)
 end
 
 """
-$(TYPEDEF)
 
 Leave the probability distribution unchanged to compute the expectation.
 """
@@ -74,18 +71,6 @@ function risk_proba(prob,riskMeasure::Expectation,costs)
 end
 
 """
-$(TYPEDEF)
-perm
-Return a dirac on the worst cost as a probability distribution.
-"""
-function risk_proba(prob,riskMeasure::WorstCase,costs)
-    proba = zeros(length(prob))
-    proba[indmax(costs)] = 1
-    return proba
-end
-
-"""
-$(TYPEDEF)
 
 Return the probability distribution to compute a convex combination
 between expactation and an Average Value at Risk of level beta.
@@ -114,7 +99,6 @@ function risk_proba(prob,riskMeasure::ConvexCombi,costs)
 end
 
 """
-$(TYPEDEF)
 
 Return the worst extreme probability distribution
 defining the convex set P

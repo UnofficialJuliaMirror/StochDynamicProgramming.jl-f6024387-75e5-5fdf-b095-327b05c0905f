@@ -1,8 +1,7 @@
-julia 0.6
-JuMP 0.18 0.18.5+
-MathProgBase 
+julia 1.0
+JuMP 0.19
+MathOptInterface
 Distributions
 ProgressMeter
 Interpolations
-CutPruners 0.0.2 
-Printf
+CutPruners 0.1.0

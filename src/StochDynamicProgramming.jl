@@ -10,9 +10,11 @@
 
 module StochDynamicProgramming
 
-using MathProgBase, JuMP, Distributions
-using DocStringExtensions
+using MathOptInterface, JuMP
+using Distributions
 using CutPruners
+
+const MOI = MathOptInterface
 
 export solve_SDDP,
         NoiseLaw, simulate_scenarios, simulate,

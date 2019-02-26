@@ -27,7 +27,7 @@ function update_penalization!(reg::SDDPRegularization)
 end
 
 function getpenaltyexpr(reg::SDDPRegularization, x, xp)
-    QuadExpr(reg.ρ*dot(x - xp, x - xp))
+    QuadExpr(reg.ρ*(x - xp)'* (x - xp))
 end
 
 function push_state!(reg::SDDPRegularization, x::Vector, t::Int, k::Int)

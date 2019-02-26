@@ -46,7 +46,7 @@ Compute the cartesian products of discretized state spaces
     the cartesian product iterators for states
 
 """
-function generate_state_grid(model::SPModel, param::SDPparameters, w::Nullable{Array} = Nullable{Array}() )
+function generate_state_grid(model::SPModel, param::SDPparameters, w )
     product_states = Base.product([model.xlim[i][1]:param.stateSteps[i]:model.xlim[i][2] for i in 1:model.dimStates]...)
 
     return collect(product_states)
@@ -71,9 +71,9 @@ Compute the cartesian products of discretized control spaces or more complex spa
 
 """
 function generate_control_grid(model::SPModel, param::SDPparameters,
-                                t::Nullable{Int} = Nullable{Int}(),
-                                x::Nullable{Array} = Nullable{Array}(),
-                                w::Nullable{Array} = Nullable{Array}())
+                                t::Int,
+                                x::Array,
+                                w::Array)
 
     if (isnull(model.build_search_space))||(isnull(t))||(isnull(x))
         product_controls = Base.product([model.ulim[i][1]:param.controlSteps[i]:model.ulim[i][2] for i in 1:model.dimControls]...)
@@ -106,9 +106,9 @@ function build_sdpmodel_from_spmodel(model::SPModel)
     end
 
     if isa(model,LinearSPModel)
-        
-        cons_fun(t,x,u,w) = true 
-        
+
+        cons_fun(t,x,u,w) = true
+
         if in(:finalCostFunction,fieldnames(model))
             SDPmodel = StochDynProgModel(model, model.finalCostFunction, cons_fun)
         else
@@ -408,7 +408,7 @@ function forward_simulations(model::SPModel,
         get_u = SdpLoops.sdp_dh_get_u
     end
 
-    build_Ux = Nullable{Function}(SDPmodel.build_search_space)
+    build_Ux = SDPmodel.build_search_space
 
 
     @sync @parallel for s in 1:nb_scenarios

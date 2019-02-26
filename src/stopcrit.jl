@@ -9,7 +9,6 @@ export stop, AbstractStoppingCriterion, OrStoppingCriterion, AndStoppingCriterio
 abstract type AbstractStoppingCriterion end
 
 """
-$(SIGNATURES)
 
 Returns whether the SDDP algorithm should stop.
 If `totalstats.niterations` is 0, no iteration has already been done, otherwise, the `niterations`th iteration has just finished.
@@ -21,7 +20,6 @@ function stop(s::AbstractStoppingCriterion, stats::AbstractSDDPStats, totalstats
 end
 
 """
-$(TYPEDEF)
 
 Stops if `lhs` *or* `rhs` want to stop.
 """
@@ -39,7 +37,6 @@ function (|)(lhs::AbstractStoppingCriterion, rhs::AbstractStoppingCriterion)
 end
 
 """
-$(TYPEDEF)
 
 Stops if `lhs` *and* `rhs` want to stop.
 """
@@ -57,7 +54,6 @@ function (&)(lhs::AbstractStoppingCriterion, rhs::AbstractStoppingCriterion)
 end
 
 """
-$(TYPEDEF)
 
 Stops if `iter` ≧ `limit`.
 """
@@ -70,7 +66,6 @@ function stop(s::IterLimit, stats::AbstractSDDPStats, totalstats::AbstractSDDPSt
 end
 
 """
-$(TYPEDEF)
 
 Stops if there was less than or equal to `limit` cuts added in the iteration.
 For instance, `CutLimit(0)` stops when there are no cuts added.
@@ -85,7 +80,6 @@ end
 
 
 """
-$(TYPEDEF)
 
 Stops if total time of execution is greater than the time limit specified.
 For instance, `TimeLimit(100)` stops after 100s.
@@ -100,7 +94,6 @@ end
 
 
 """
-$(TYPEDEF)
 
 Stops if `z_UB - α * σ/√K - tol < z_LB < z_UB + α * σ/√K + tol` and `σ / √K > β * max(1, |z_LB|))`
 """
@@ -131,7 +124,6 @@ function stop(s::Pereira, stats::AbstractSDDPStats, totalstats::AbstractSDDPStat
 end
 
 """
-$(TYPEDEF)
 
 Stops if the lower bound is stabilized
 total time of execution is greater than the time limit specified.

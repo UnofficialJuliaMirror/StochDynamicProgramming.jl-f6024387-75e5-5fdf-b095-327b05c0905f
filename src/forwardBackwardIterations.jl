@@ -9,7 +9,6 @@
 """
 Run a forward pass of the algorithm with `sddp` object
 
-$(SIGNATURES)
 
 # Description
 Simulate scenarios of noise and compute optimal trajectories on those
@@ -60,7 +59,6 @@ end
 """
 Simulate a forward pass of the algorithm
 
-$(SIGNATURES)
 
 # Description
 Simulate a scenario of noise and compute an optimal trajectory on this
@@ -141,7 +139,7 @@ function forward_simulations(model::SPModel,
             callsolver += 1
 
             # Solve optimization problem corresponding to current position:
-            if !isnull(regularizer) && !isa(get(regularizer).incumbents, Void)
+            if !isnothing(regularizer) && !isa(get(regularizer).incumbents, Void)
                 reg = get(regularizer)
                 xp = getincumbent(reg, t, k)
                 sol, ts = regularize(model, param, reg,
@@ -178,7 +176,7 @@ function forward_simulations(model::SPModel,
                     costs[k] += θ
                 end
                 # update cutpruners status with new point
-                if param.prune && ~isnull(pruner) && t < T-1
+                if param.prune && ~isnothing(pruner) && t < T-1
                     update!(pruner[t+1], sol.xf, sol.πc)
                 end
             else
@@ -198,7 +196,6 @@ end
 """
 Add to polyhedral function a cut with shape Vt >= beta + <lambda,.>
 
-$(SIGNATURES)
 
 # Arguments
 * `model::SPModel`: Store the problem definition
@@ -243,7 +240,7 @@ function add_cut_to_model!(model::SPModel, problem::JuMP.Model,
     (verbosity > 4) && println("adding cut to model at time t=",t)
     alpha = problem[:alpha]
     xf = problem[:xf]
-    @constraint(problem, beta + dot(lambda, xf) <= alpha)
+    @constraint(problem, beta + lambda' * xf <= alpha)
     problem.ext[:ncuts] += 1
 end
 
@@ -254,14 +251,13 @@ function add_cut_dh!(model::SPModel, problem::JuMP.Model,
     xf = problem[:xf]
 
     for j=1:length(model.noises[t].proba)
-        @constraint(problem, beta + dot(lambda, xf[:, j]) <= alpha[j])
+        @constraint(problem, beta + lambda' * xf[:, j] <= alpha[j])
     end
 end
 
 """
 Run a SDDP backward pass on `sddp`.
 
-$(SIGNATURES)
 
 # Description
 For t:T-1 -> 0, compute a valid cut of the Bellman function
@@ -361,9 +357,9 @@ function compute_cuts_hd!(model::SPModel, param::SDDPparameters,
         # Compute expectation of subgradient λ:
         subgradient = vec(sum(proba' .* subgradient_array, 2))
         # ... expectation of cost:
-        costs_npass = dot(proba, costs)
+        costs_npass = proba' * costs
         # ... and expectation of slope β:
-        beta = costs_npass - dot(subgradient, state_t)
+        beta = costs_npass - subgradient' * state_t
 
         # Add cut to polyhedral function and JuMP model:
         if ~isinside(V[t], subgradient)
@@ -397,7 +393,7 @@ function compute_cuts_dh!(model::SPModel, param::SDDPparameters,
         # ... expectation of cost:
         costs_npass = sol.objval
         # ... and expectation of slope β:
-        beta = costs_npass - dot(subgradient, state_t)
+        beta = costs_npass - subgradient' * state_t
 
         # Add cut to polyhedral function and JuMP model:
         add_cut!(model, t, V[t], beta, subgradient, verbosity)
@@ -485,7 +481,7 @@ function fwdcuts(sddp)
             # ... expectation of cost:
             costs_npass = sol.objval
             # ... and expectation of slope β:
-            beta = costs_npass - dot(subgradient, state_t)
+            beta = costs_npass - subgradient' * state_t
 
             # Add cut to polyhedral function and JuMP model:
             add_cut!(model, t, V[t], beta, subgradient, verbosity)
