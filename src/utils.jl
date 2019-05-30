@@ -99,11 +99,11 @@ Pass number     Upper bound     Lower bound     exectime
 
 """
 function Base.show(io::IO, stats::SDDPStat)
-    #= print("Pass n\° ", stats.niterations) =#
-    #= if stats.niterations == 0 return end =#
-    #= (stats.upper_bounds[end] < Inf) && @printf("\tUpper-bound: %.4e", stats.upper_bounds[end]) =#
-    #= @printf("\tLower-bound: %.4e", stats.lower_bounds[end]) =#
-    #= print("\tTime: ", round(stats.exectime[end], 2),"s") =#
+    print("Pass ", stats.niterations)
+    if stats.niterations == 0 return end
+    (stats.upper_bounds[end] < Inf) && @printf("\tUpper-bound: %.4e", stats.upper_bounds[end])
+    @printf("\tLower-bound: %.4e", stats.lower_bounds[end])
+    @printf("\tTime: %.2fs", stats.exectime[end])
 end
 
 """Check if `k` is congruent with current iteration `it`."""

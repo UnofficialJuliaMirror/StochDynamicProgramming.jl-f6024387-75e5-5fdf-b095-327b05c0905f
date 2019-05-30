@@ -56,10 +56,10 @@ function solve_one_step_one_alea(model,
                                  verbosity::Int64=0)
 
     # Get var defined in JuMP.model:
-    x = JuMP.index(m, :x)
-    u = JuMP.index(m, :u)
-    w = JuMP.index(m, :w)
-    alpha = JuMP.index(m, :alpha)
+    x = m[:x]
+    u = m[:u]
+    w = m[:w]
+    alpha = m[:alpha]
 
     # Update value of w:
     JuMP.fix.(w, xi)
@@ -72,7 +72,7 @@ function solve_one_step_one_alea(model,
             @objective(m, Min, model.costFunctions(m, t, x, u, xi) + alpha)
         end
     elseif isa(model.costFunctions, Vector{Function})
-        cost = JuMP.index(m, :cost)
+        cost = m[:cost]
         for i in 1:length(model.costFunctions)
             @constraint(m, cost >= model.costFunctions[i](t, x, u, xi))
         end
@@ -80,46 +80,36 @@ function solve_one_step_one_alea(model,
     end
 
     # Update constraint x == xt
-    for i in 1:model.dimStates
-        JuMP.setRHS(m.ext[:cons][i], xt[i])
-    end
+    JuMP.fix.(m[:x_constant], xt)
 
     if false
-        println("One step one alea problem at time t=",t)
-        println("for x =",xt)
-        println("and w=",xi)
+        println("One step one alea problem at time t=", t)
+        println("for x =", xt)
+        println("and w=", xi)
         print(m)
     end
 
-    if model.IS_SMIP
-        solved = relaxation ? solve_relaxed!(m, param,verbosity) : solve_mip!(m, param,verbosity)
-    else
-        status = (verbosity>3) ? solve(m, suppress_warnings=false) : solve(m, suppress_warnings=false)
-        solved = (status == :Optimal) || (status == :Suboptimal)
-    end
+    JuMP.optimize!(m)
 
     # get time taken by the solver:
-    # TODO
     solvetime = 0
 
-    if solved
-        optimalControl = getvalue(u)
+    if true
+        optimalControl = JuMP.value.(u)
         # Return object storing results:
         result = NLDSSolution(
-                              solved,
-                              getobjectivevalue(m),
+                              true,
+                              JuMP.objective_value(m),
                               model.dynamics(t, xt, optimalControl, xi),
                               optimalControl,
-                              getdual(m.ext[:cons]),
-        getvalue(alpha),
-        getcutsmultipliers(m))
+                              JuMP.dual.(m.ext[:cons]),
+                              JuMP.value(alpha),
+                              getcutsmultipliers(m))
     else
         println(m)
         println(status)
         error("Foo")
         # If no solution is found, then return nothing
-        #= println(m) =#
-        #= error("Fail to solve") =#
         result = NLDSSolution()
     end
 
@@ -132,9 +122,7 @@ function solve_dh(model, param, t, xt, m; verbosity::Int64=0)
     xf = JuMP.index(m, :xf)
     u = JuMP.index(m, :u)
     alpha = JuMP.index(m, :alpha)
-    for i in 1:model.dimStates
-        JuMP.setRHS(m.ext[:cons][i], xt[i])
-    end
+    JuMP.fix.(m[:x_constant], xt)
 
     (verbosity>5) && println("Decision Hazard model")
     (verbosity>5) && print(m)
@@ -195,8 +183,8 @@ end
 """Solve relaxed MILP problem."""
 function solve_relaxed!(m, param,verbosity::Int64=0)
     setsolver(m, param.SOLVER)
-    status = solve(m, relaxation=true)
-    return status == :Optimal
+    status = JuMP.optimize!(m)
+    return status == JuMP.MOI.OPTIMAL
 end
 
 
@@ -208,5 +196,6 @@ function solve_mip!(m, param,verbosity::Int64=0)
 end
 
 
-getcutsmultipliers(m::JuMP.Model)=_getdual(m)[end-m.ext[:ncuts]+1:end]
-_getdual(m::JuMP.Model) = JuMP.getdual(m)
+getcutsmultipliers(m::JuMP.Model)=zeros(m.ext[:ncuts])
+#_getdual(m)[end-m.ext[:ncuts]+1:end]
+#= _getdual(m::JuMP.Model) = JuMP.getdual(m) =#

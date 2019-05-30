@@ -11,38 +11,41 @@
 using StochDynamicProgramming, JuMP
 
 include("solver.jl")
-const EPSILON = .05
-const MAX_ITER = 20
+
+begin const
+EPSILON = .05
+MAX_ITER = 20
 
 # N_STAGES is the number of stage for states, including terminal state.
-const N_STAGES = 53
-const N_SCENARIOS = 10
+N_STAGES = 53
+N_SCENARIOS = 10
 
 alea_year = Array([7.0 7.0 8.0 3.0 1.0 1.0 3.0 4.0 3.0 2.0 6.0 5.0 2.0 6.0 4.0 7.0 3.0 4.0 1.0 1.0 6.0 2.0 2.0 8.0 3.0 7.0 3.0 1.0 4.0 2.0 4.0 1.0 3.0 2.0 8.0 1.0 5.0 5.0 2.0 1.0 6.0 7.0 5.0 1.0 7.0 7.0 7.0 4.0 3.0 2.0 8.0 7.0])
 
 
 # COST:
-const COST = -66*2.7*(1 .+ .5*(rand(N_STAGES) .- .5))
+COST = -66*2.7*(1 .+ .5*(rand(N_STAGES) .- .5))
 
 # Constants:
-const VOLUME_MAX = 100
-const VOLUME_MIN = 0
+VOLUME_MAX = 100
+VOLUME_MIN = 0
 
-const CONTROL_MAX = round(Int, .4/7. * VOLUME_MAX) + 1
-const CONTROL_MIN = 0
+CONTROL_MAX = round(Int, .4/7. * VOLUME_MAX) + 1
+CONTROL_MIN = 0
 
-const W_MAX = round(Int, .5/7. * VOLUME_MAX)
-const W_MIN = 0
-const DW = 1
+W_MAX = round(Int, .5/7. * VOLUME_MAX)
+W_MIN = 0
+DW = 1
 
-const T0 = 1
-const HORIZON = 52
+T0 = 1
+HORIZON = 52
 
-const X0 = [90]
+X0 = [90]
 
 # Define aleas' space:
-const N_ALEAS = Int(round(Int, (W_MAX - W_MIN) / DW + 1))
-const ALEAS = range(W_MIN, stop=W_MAX, length=N_ALEAS)
+N_ALEAS = Int(round(Int, (W_MAX - W_MIN) / DW + 1))
+ALEAS = range(W_MIN, stop=W_MAX, length=N_ALEAS)
+end
 
 
 # Define dynamic of the dam:
@@ -160,15 +163,10 @@ end
 
 
 """Solve the problem."""
-function solve_dams(display=0)
-    model, params = init_problem()
+model, params = init_problem()
 
-    sddp = solve_SDDP(model, params, display)
-    aleas = simulate_scenarios(model.noises, params.forwardPassNumber)
+sddp = solve_SDDP(model, params, 1)
+aleas = simulate_scenarios(model.noises, params.forwardPassNumber)
 
-    costs, stocks = forward_simulations(model, params, sddp.solverinterface, aleas)
-    println("SDDP cost: ", costs)
-    return stocks
-end
-
-solve_dams(1)
+costs, stocks = forward_simulations(model, params, sddp.solverinterface, aleas)
+println("SDDP cost: ", costs)

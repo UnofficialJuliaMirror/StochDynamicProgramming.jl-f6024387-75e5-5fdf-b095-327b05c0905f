@@ -138,7 +138,6 @@ end
 """Run SDDP iteration."""
 function iteration!(sddp::SDDPInterface)
     # Time execution of current pass:
-    tic()
 
     ####################
     # Forward pass : compute stockTrajectories
@@ -150,7 +149,8 @@ function iteration!(sddp::SDDPInterface)
 
     ####################
     # Time execution of current pass
-    time_pass = toq()
+    # TODO
+    time_pass = 0.
 
     ####################
     # cut pruning
@@ -170,7 +170,6 @@ end
 # If specified, run two joint iterations in the primal and in the dual.
 function iteration!(sddpprimal::SDDPInterface, sddpdual::SDDPInterface)
     # Time execution of current pass:
-    tic()
 
     ####################
     # Forward pass : compute stockTrajectories
@@ -179,13 +178,10 @@ function iteration!(sddpprimal::SDDPInterface, sddpdual::SDDPInterface)
     ####################
     # Backward pass : update polyhedral approximation of Bellman functions
     costates = backward_pass!(sddpprimal, states)
-    time_pass = toq()
+    time_pass = 0.
 
     # Dual Backward pass
-    tic()
     stateback = backward_pass!(sddpdual, costates)
-    tdual = toq()
-
 
     ####################
     # cut pruning
@@ -352,7 +348,9 @@ function build_model(model, param, t,verbosity::Int64=0)
     @variable(m, alpha)
 
     @variable(m, w[1:nw] == 0)
-    m.ext[:cons] = @constraint(m, state_constraint, x .== 0)
+    # Add dummy variable to handle constraint RHS.
+    @variable(m, x_constant[i=1:nx])
+    m.ext[:cons] = @constraint(m, state_constraint, x .== x_constant)
 
     @constraint(m, xf .== model.dynamics(t, x, u, w))
 
@@ -418,18 +416,18 @@ function build_model_dh(model, param, t, verbosity::Int64=0)
     # add objective as minimization of expectancy:
     try
         @objective(m, Min,
-                        sum(πp[j]*(model.costFunctions(t, x, u, ξ[:, j]) +
-                                    alpha[j]) for j in 1:ns))
+                      sum(πp[j]*(model.costFunctions(t, x, u, ξ[:, j]) +
+                                  alpha[j]) for j in 1:ns))
     catch
         @objective(m, Min,
-                        sum(πp[j]*(model.costFunctions(m, t, x, u, ξ[:, j]) +
-                        alpha[j]) for j in 1:ns))
+                      sum(πp[j]*(model.costFunctions(m, t, x, u, ξ[:, j]) +
+                      alpha[j]) for j in 1:ns))
     end
 
     # store number of cuts
     m.ext[:ncuts] = 0
 
-    (verbosity >5) && print(m)
+    (verbosity > 5) && print(m)
     return m
 end
 
@@ -579,7 +577,7 @@ function get_bellman_value(model::SPModel, param::SDDPparameters,
 
     @objective(m, Min, alpha)
     JuMP.optimize!(m)
-    return JuMP.getvalue(alpha)
+    return JuMP.value(alpha)
 end
 
 """

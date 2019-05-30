@@ -85,4 +85,4 @@ function initpruner(algo, n_stages, n_dim)
     return [CutPruners.CutPruner{n_dim, Float64}(algo, :Max) for i in 1:n_stages-1]
 end
 
-isregularized(sddp::SDDPInterface) = !isnull(sddp.regularizer)
+isregularized(sddp::SDDPInterface) = false

@@ -1,7 +1,8 @@
 
 
-using Clp
-SOLVER = Clp.Optimizer
+using Clp, Xpress
+#= SOLVER = with_optimizer(Clp.Optimizer, LogLevel=0) =#
+SOLVER = Xpress.Optimizer
 #= using Gurobi =#
 #= SOLVER = Gurobi.GurobiSolver(OutputFlag=false, Threads=1) =#
 #= using CPLEX =#
