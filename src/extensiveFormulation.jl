@@ -29,7 +29,7 @@ function extensive_formulation(model, param; verbosity=0)
 
     X_init = model.initialState
     T = model.stageNumber-1
-    mod = Model(solver=param.SOLVER)
+    mod = Model(param.SOLVER)
 
     #Calculate the number of nodes n at each step on the scenario tree
     N = Array{Int64,2}(zeros(T+1,1))
@@ -45,25 +45,26 @@ function extensive_formulation(model, param; verbosity=0)
     @variable(mod,  c[t=1:T,n=1:laws[t].supportSize*N[t]])
 
     #Computes the total probability of each node from the conditional probabilities
-    proba    = Vector{typeof(laws[1].proba)}(T)
-    proba[1] = laws[1].proba
-    for t = 2 : T
-        proba[t] = zeros(N[t+1])
+    proba    = Vector{Float64}[]
+    push!(proba, laws[1].proba)
+    for t in 2:T
+        proba_t = zeros(N[t+1])
         for j = 1 : N[t]
             for k = 1 : laws[t].supportSize
-                proba[t][laws[t].supportSize*(j-1)+k] = laws[t].proba[k]*proba[t-1][j]
+                proba_t[laws[t].supportSize*(j-1)+k] = laws[t].proba[k]*proba[t-1][j]
             end
         end
+        push!(proba, proba_t)
     end
     #Add state constraints
-    for t = 1 :(T+1)
+    for t = 1:(T+1)
         for n = 1 : N[t]
             @constraint(mod,[x[t,DIM_STATE*(n-1)+k] for k = 1:DIM_STATE] .>= [model.xlim[k][1] for k = 1:DIM_STATE])
             @constraint(mod,[x[t,DIM_STATE*(n-1)+k] for k = 1:DIM_STATE] .<= [model.xlim[k][2] for k = 1:DIM_STATE])
         end
     end
     #Instantiate the problem creating dynamic constraint at each node
-    for t = 1 : (T)
+    for t in 1:(T)
         for n = 1 : N[t]
             for xi = 1 : laws[t].supportSize
                 m = (n-1)*laws[t].supportSize+xi
@@ -99,13 +100,14 @@ function extensive_formulation(model, param; verbosity=0)
             for k = 1:laws[t].supportSize)
         for t = 1:T,  n=1:div(N[t+1],laws[t].supportSize)))
 
-    status = solve(mod)
-    solved = (status == :Optimal)
+    JuMP.optimize!(mod)
+    status = JuMP.termination_status(mod)
+    solved = status == JuMP.MOI.OPTIMAL
 
     if solved
-        (verbosity > 0) && println("EF value: "*string(getobjectivevalue(mod)))
-        firstControl = collect(values(getvalue(u)))[1:DIM_CONTROL*laws[1].supportSize]
-        return getobjectivevalue(mod), firstControl, status
+        (verbosity > 0) && println("EF value: "*string(JuMP.objective_value(mod)))
+        firstControl = JuMP.value.(u)
+        return JuMP.objective_value(mod), firstControl, status
     else
         error("Extensive formulation not solved to optimality. Change the model")
     end

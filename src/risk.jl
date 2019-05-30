@@ -33,7 +33,7 @@ allowing to compute the risk
 
 """
 function risk_proba(prob, riskMeasure::RiskMeasure,costs)
-    error("'risk_proba' not defined for $(typedof(s))")
+    error("'risk_proba' not defined for $(typeof(riskMeasure))")
 end
 
 """
@@ -106,5 +106,5 @@ defining the convex set P
 function risk_proba(prob,riskMeasure::PolyhedralRisk,costs)
     P = riskMeasure.polyset
     valuesup = P*costs
-    return P[indmax(valuesup),:]
+    return P[argmax(valuesup),:]
 end

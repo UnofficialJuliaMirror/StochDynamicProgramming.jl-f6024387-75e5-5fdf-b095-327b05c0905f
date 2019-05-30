@@ -9,7 +9,7 @@
 
 using StochDynamicProgramming
 using Clp, JuMP
-using Base.Test
+using Test
 
 
 # Test utility functions:
@@ -22,7 +22,7 @@ include("changeprob.jl")
 include("sddp.jl")
 
 # Test DP:
-include("sdp.jl")
+#= include("sdp.jl") =#
 
 # Test extensive formulation:
 include("extensive_formulation.jl")

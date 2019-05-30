@@ -2,10 +2,11 @@
 # Test extensive formulation
 ################################################################################
 
-using StochDynamicProgramming, Base.Test, Clp
+using StochDynamicProgramming, Test, Clp
+using Xpress, JuMP
 
 @testset "Extensive formulation" begin
-    solver = ClpSolver()
+    solver = JuMP.with_optimizer(Xpress.Optimizer)
 
     # SDDP's tolerance:
     epsilon = .05
@@ -28,10 +29,10 @@ using StochDynamicProgramming, Base.Test, Clp
     end
 
     # Generate probability laws:
-    laws = Vector{NoiseLaw}(n_stages)
+    laws = NoiseLaw[]
     proba = 1/n_aleas*ones(n_aleas)
     for t=1:n_stages
-        laws[t] = NoiseLaw([0, 1, 3, 4, 6], proba)
+        push!(laws, NoiseLaw([0, 1, 3, 4, 6], proba))
     end
 
     # set initial position:
