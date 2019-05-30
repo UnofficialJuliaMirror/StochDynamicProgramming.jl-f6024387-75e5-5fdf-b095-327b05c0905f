@@ -190,12 +190,11 @@ using Test, StatsBase, CutPruners
         # Dump V in text file:
         StochDynamicProgramming.writecsv("dump.dat", V)
         # Get stored values:
-        # TODO
-        #= Vdump = StochDynamicProgramming.read_polyhedral_functions("dump.dat") =#
+        Vdump = StochDynamicProgramming.read_polyhedral_functions("dump.dat")
 
-        #= @test V[1].numCuts == Vdump[1].numCuts =#
-        #= @test V[1].betas == Vdump[1].betas =#
-        #= @test V[1].lambdas == Vdump[1].lambdas =#
+        @test V[1].numCuts == Vdump[1].numCuts
+        @test V[1].betas == Vdump[1].betas
+        @test V[1].lambdas == Vdump[1].lambdas
     end
 
     #= @testset "Compare parameters" begin =#
@@ -295,10 +294,10 @@ end
         StochDynamicProgramming.writecsv("dump.dat", V)
         # Get stored values:
         # #TODO
-        #= Vdump = StochDynamicProgramming.read_polyhedral_functions("dump.dat") =#
+        Vdump = StochDynamicProgramming.read_polyhedral_functions("dump.dat")
 
-        #= @test V[1].numCuts == Vdump[1].numCuts =#
-        #= @test V[1].betas == Vdump[1].betas =#
-        #= @test V[1].lambdas == Vdump[1].lambdas =#
+        @test V[1].numCuts == Vdump[1].numCuts
+        @test V[1].betas == Vdump[1].betas
+        @test V[1].lambdas == Vdump[1].lambdas
     end
 end
