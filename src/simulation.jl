@@ -124,7 +124,7 @@ Upper bound is the max of this interval.
 estimated-upper bound as `Float`
 """
 function upper_bound_confidence(cost::Vector{Float64}, probability=.975)
-    tol = sqrt(2) * erfinv(2*probability - 1)
+    tol = 1.96
     return tol*std(cost)/sqrt(length(cost))
 end
 

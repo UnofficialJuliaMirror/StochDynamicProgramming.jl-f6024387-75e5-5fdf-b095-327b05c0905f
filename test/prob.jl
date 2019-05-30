@@ -1,7 +1,7 @@
 ################################################################################
 # Test probability functions
 ################################################################################
-using Base.Test, StochDynamicProgramming
+using Test, StochDynamicProgramming
 
 @testset "Probability functions" begin
     support = [1, 2, 3]
@@ -10,7 +10,7 @@ using Base.Test, StochDynamicProgramming
     # test reshaping_noise
     @test typeof(StochDynamicProgramming.reshaping_noise(support, proba))==Tuple{Array{Int64,2},Array{Float64,1}}
     @test typeof(StochDynamicProgramming.reshaping_noise([1 2 3], proba))==Tuple{Array{Int64,2},Array{Float64,1}}
-    
+
     law = NoiseLaw(support, proba)
     @test typeof(law) == NoiseLaw
     @test law.supportSize == 3

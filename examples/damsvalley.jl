@@ -4,7 +4,8 @@
 
 ##################################################
 # Set a seed for reproductability:
-srand(2713)
+using Random
+Random.seed!(2713)
 
 using StochDynamicProgramming, JuMP
 
@@ -23,7 +24,7 @@ const N_ALEAS = 10
 
 # Cost are negative as we sell the electricity produced by
 # dams (and we want to minimize our problem)
-const COST = -66*2.7*(1 + .5*(rand(N_STAGES) - .5))
+const COST = -66*2.7*(1 .+ .5*(rand(N_STAGES) .- .5))
 
 # Constants:
 const VOLUME_MAX = 80
@@ -36,7 +37,7 @@ const CONTROL_MIN = 0
 const X0 = [40 for i in 1:N_DAMS]
 
 # Dynamic of stocks:
-const A = eye(N_DAMS)
+const A = I + zeros(N_DAMS, N_DAMS)
 # The problem has the following structure:
 # dam1 -> dam2 -> dam3 -> dam4 -> dam5
 # We need to define the corresponding dynamic:
@@ -76,7 +77,7 @@ function final_cost_dams(model, m)
     @JuMP.constraint(m, z3 >= 40 - xf[3])
     @JuMP.constraint(m, z4 >= 40 - xf[4])
     @JuMP.constraint(m, z5 >= 40 - xf[5])
-    @JuMP.objective(m, Min, model.costFunctions(model.stageNumber-1, x, u, w) + 500.*(z1*z1+z2*z2+z3*z3+z4*z4+z5*z5))
+    @JuMP.objective(m, Min, model.costFunctions(model.stageNumber-1, x, u, w) + 500. * (z1*z1+z2*z2+z3*z3+z4*z4+z5*z5))
 end
 
 ##################################################
@@ -92,13 +93,13 @@ const MAX_ITER = 40
 """Build probability distribution at each timestep.
 Return a Vector{NoiseLaw}"""
 function generate_probability_laws()
-    laws = Vector{NoiseLaw}(N_STAGES-1)
+    laws = NoiseLaw[]
     # uniform probabilities:
     proba = 1/N_ALEAS*ones(N_ALEAS)
 
     for t=1:N_STAGES-1
         support = rand(0:9, N_DAMS, N_ALEAS)
-        laws[t] = NoiseLaw(support, proba)
+        push!(laws, NoiseLaw(support, proba))
     end
     return laws
 end

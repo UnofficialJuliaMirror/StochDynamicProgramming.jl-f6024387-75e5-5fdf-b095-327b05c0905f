@@ -21,7 +21,7 @@ test_simulation = true # false if you don't want to test your strategies
 
 ######## Optimization parameters  ########
 # choose the LP solver used.
-SOLVER = ClpSolver() 			   # require "using Clp"
+SOLVER = Clp.Optimizer() 			   # require "using Clp"
 #const SOLVER = CplexSolver(CPX_PARAM_SIMDISPLAY=0, CPX_PARAM_SCRIND=0) # require "using CPLEX"
 
 # convergence test

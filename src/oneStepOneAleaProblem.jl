@@ -119,16 +119,16 @@ end
 
 """Solve model in Decision-Hazard."""
 function solve_dh(model, param, t, xt, m; verbosity::Int64=0)
-    xf = JuMP.index(m, :xf)
-    u = JuMP.index(m, :u)
-    alpha = JuMP.index(m, :alpha)
+    xf = m[:xf]
+    u = m[:u]
+    alpha = m[:alpha]
     JuMP.fix.(m[:x_constant], xt)
 
     (verbosity>5) && println("Decision Hazard model")
     (verbosity>5) && print(m)
 
-    status = solve(m)
-    solved = status == :Optimal
+    status = JuMP.optimize!(m)
+    solved = JuMP.termination_status(m) == JuMP.MOI.OPTIMAL
 
     if ~solved
         println(m)
@@ -143,13 +143,13 @@ function solve_dh(model, param, t, xt, m; verbosity::Int64=0)
 
     if solved
         # Computation of subgradient:
-        λ = Float64[getdual(m.ext[:cons][i]) for i in 1:model.dimStates]
+        λ = Float64[JuMP.dual(m.ext[:cons][i]) for i in 1:model.dimStates]
         result = DHNLDSSolution(solved,
-                                getobjectivevalue(m),
-                                getvalue(xf),
-                                getvalue(u)[:, 1],
+                                JuMP.objective_value(m),
+                                JuMP.value.(xf),
+                                JuMP.value.(u)[:, 1],
                                 λ,
-                                getvalue(alpha),
+                                JuMP.value.(alpha),
                                 getcutsmultipliers(m))
     else
         # If no solution is found, then return nothing
@@ -158,7 +158,6 @@ function solve_dh(model, param, t, xt, m; verbosity::Int64=0)
 
     return result, solvetime
 end
-
 
 
 # Solve local problem with a quadratic penalization:

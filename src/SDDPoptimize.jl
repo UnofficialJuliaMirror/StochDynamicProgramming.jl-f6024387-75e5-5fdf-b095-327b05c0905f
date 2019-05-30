@@ -391,7 +391,7 @@ end
 
 """Build model in Decision-Hazard."""
 function build_model_dh(model, param, t, verbosity::Int64=0)
-    m = Model(solver=param.SOLVER)
+    m = Model(with_optimizer(param.SOLVER))
     law = model.noises
 
     nx = model.dimStates
@@ -407,7 +407,8 @@ function build_model_dh(model, param, t, verbosity::Int64=0)
     @variable(m, model.xlim[i,t][1] <= xf[i=1:nx, j=1:ns]<= model.xlim[i,t][2])
     @variable(m, alpha[1:ns])
 
-    m.ext[:cons] = @constraint(m, state_constraint, x .== 0)
+    @variable(m, x_constant[i=1:nx])
+    m.ext[:cons] = @constraint(m, state_constraint, x .== x_constant)
 
     for j=1:ns
         @constraint(m, xf[:, j] .== model.dynamics(t, x, u, ξ[:, j]))
